@@ -5,11 +5,15 @@ import { ProductCard } from "@/components/ProductCard";
 import { CartDrawer } from "@/components/CartDrawer";
 import { BrandStrip } from "@/components/BrandStrip";
 import { MediaShowcase } from "@/components/MediaShowcase";
+import { FlashDeals } from "@/components/FlashDeals";
+import { DealOfTheDay } from "@/components/DealOfTheDay";
+import { CompleteYourSetup } from "@/components/CompleteYourSetup";
+import { TrendingNow } from "@/components/TrendingNow";
+import { JustLaunched } from "@/components/JustLaunched";
 import { getProducts } from "@/lib/api/products";
 import Link from "next/link";
 import {
-  ChevronRight, Shield, RotateCcw, Truck, Headphones,
-  ArrowRight, BookOpen, Heart, Clock, Star, MapPin, CreditCard, Users
+  ChevronRight, ArrowRight, BookOpen, Heart, Clock,
 } from "lucide-react";
 import { CATEGORY_MAP } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
@@ -71,6 +75,88 @@ const SELLING_POINTS = [
   { icon: "🔒", label: "Authentic. Guaranteed.", sub: "Every product verified", color: "from-indigo-500 to-indigo-700" },
 ];
 
+// Fetch products with compare_price (deals)
+async function getFlashDeals() {
+  const { data } = await supabase
+    .from("products")
+    .select("id, product_name, selling_price, compare_price, image_url, slug, category")
+    .eq("is_active", true)
+    .not("compare_price", "is", null)
+    .gt("compare_price", 0)
+    .order("created_at", { ascending: false })
+    .limit(10);
+  return data || [];
+}
+
+// Fetch the single best deal for Deal of the Day
+async function getDealOfTheDay() {
+  const { data } = await supabase
+    .from("products")
+    .select("id, product_name, selling_price, compare_price, image_url, slug, category, description")
+    .eq("is_active", true)
+    .not("compare_price", "is", null)
+    .gt("compare_price", 0)
+    .order("compare_price", { ascending: false })
+    .limit(1)
+    .single();
+  return data;
+}
+
+// Fetch trending (most expensive = most popular proxy)
+async function getTrendingProducts() {
+  const { data } = await supabase
+    .from("products")
+    .select("id, product_name, selling_price, compare_price, image_url, slug, category")
+    .eq("is_active", true)
+    .order("selling_price", { ascending: false })
+    .limit(8);
+  return data || [];
+}
+
+// Fetch just launched (newest)
+async function getJustLaunched() {
+  const { data } = await supabase
+    .from("products")
+    .select("id, product_name, selling_price, compare_price, image_url, slug, category, created_at")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(5);
+  return data || [];
+}
+
+// Fetch bundle suggestions
+async function getBundles() {
+  const bundleConfigs = [
+    { title: "Home Office", icon: "💻", description: "Everything you need for a productive workspace", categories: ["COMPUTING ACCESSORIES", "POWER", "ACCESSORIES"] },
+    { title: "Smart Home", icon: "🏠", description: "Transform your home into a connected space", categories: ["ENTERPRISE", "ACCESSORIES", "POWER"] },
+    { title: "Mobile Life", icon: "📱", description: "Stay connected and powered up on the go", categories: ["MOBILE DEVICES", "ACCESSORIES", "POWER"] },
+  ];
+
+  const bundles = await Promise.all(
+    bundleConfigs.map(async (config) => {
+      const products: any[] = [];
+      for (const cat of config.categories) {
+        const { data } = await supabase
+          .from("products")
+          .select("id, product_name, selling_price, image_url, slug, category")
+          .eq("category", cat)
+          .eq("is_active", true)
+          .limit(3);
+        if (data) products.push(...data);
+      }
+      return {
+        title: config.title,
+        description: config.description,
+        icon: config.icon,
+        gradient: "",
+        products: products.slice(0, 8),
+      };
+    })
+  );
+
+  return bundles.filter((b) => b.products.length >= 3);
+}
+
 async function getMixedProducts() {
   const categories = [
     "COMPUTING ACCESSORIES",
@@ -101,10 +187,24 @@ async function getMixedProducts() {
   return mixed.slice(0, 16);
 }
 
+
 export default async function Home() {
-  const [{ products: newArrivals }, mixedProducts] = await Promise.all([
+  const [
+    { products: newArrivals },
+    mixedProducts,
+    flashDeals,
+    dealOfTheDay,
+    trendingProducts,
+    justLaunched,
+    bundles,
+  ] = await Promise.all([
     getProducts({ limit: 8, sortBy: "created_at", sortOrder: "desc" }),
     getMixedProducts(),
+    getFlashDeals(),
+    getDealOfTheDay(),
+    getTrendingProducts(),
+    getJustLaunched(),
+    getBundles(),
   ]);
 
   return (
@@ -113,14 +213,25 @@ export default async function Home() {
       <div className="min-h-screen overflow-x-hidden" style={{ background: "linear-gradient(160deg,#eef2ff 0%,#f8faff 30%,#f0f7ff 60%,#eff0ff 100%)" }}>
         <Header />
 
+        {/* === HERO SECTION (UNTOUCHED) === */}
         <div className="px-4 pt-4 pb-0">
           <HeroSlider />
         </div>
 
         <div className="h-8 md:h-12" />
 
+        {/* === NEW: JUST LAUNCHED BENTO GRID === */}
+        <JustLaunched products={justLaunched} />
+
         <BrandStrip />
 
+        {/* === NEW: TRENDING NOW === */}
+        <TrendingNow products={trendingProducts} />
+
+        {/* === NEW: FLASH DEALS WITH COUNTDOWN === */}
+        <FlashDeals deals={flashDeals} />
+
+        {/* === EXISTING: NEW ARRIVALS GRID === */}
         <section className="py-12 px-4 max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="h-0.5 flex-1 bg-gradient-to-r from-blue-600 to-transparent rounded-full" />
@@ -134,8 +245,16 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* === NEW: DEAL OF THE DAY === */}
+        <DealOfTheDay product={dealOfTheDay} />
+
+        {/* === EXISTING: MEDIA SHOWCASE === */}
         <MediaShowcase />
 
+        {/* === NEW: COMPLETE YOUR SETUP (BUNDLE BUILDER) === */}
+        <CompleteYourSetup bundles={bundles} />
+
+        {/* === EXISTING: MIXED CATEGORIES === */}
         <section className="py-12 px-4 max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="h-0.5 flex-1 bg-gradient-to-r from-purple-600 to-transparent rounded-full" />
@@ -149,6 +268,7 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* === EXISTING: DREAM NOW PAY LATER BANNER === */}
         <section className="py-8 px-4 max-w-7xl mx-auto">
           <div
             className="rounded-3xl overflow-hidden relative"
@@ -198,6 +318,7 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* === EXISTING: BLOG PREVIEWS === */}
         <section className="py-14 px-4 max-w-7xl mx-auto">
           <div className="flex items-start justify-between mb-8">
             <div>
@@ -211,6 +332,7 @@ export default async function Home() {
               View all <ChevronRight size={14} />
             </Link>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {BLOG_PREVIEWS.map((post) => (
               <Link key={post.slug} href={`/blog/${post.slug}`} className="group block">
@@ -240,6 +362,7 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* === FOOTER TRANSITION WITH VEHICLE/BICYCLE ANIMATION (RESTORED) === */}
         <div className="relative overflow-hidden" style={{ height: "100px", background: "#081530", borderTopLeftRadius: "28px", borderTopRightRadius: "28px" }}>
           <div className="absolute inset-0" style={{ background: "linear-gradient(180deg,#0b1d3f 0%,#081530 55%,#040b1f 100%)" }} />
 
@@ -320,77 +443,94 @@ export default async function Home() {
           `}</style>
         </div>
 
-        <footer className="py-14 px-4" style={{ background: "#020817" }}>
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
-              <div>
-                <div className="mb-4 inline-block rounded-2xl px-4 py-3" style={{ background: "linear-gradient(135deg, rgba(21,101,192,0.35) 0%, rgba(0,59,126,0.2) 100%)", border: "1px solid rgba(99,179,255,0.15)" }}>
-                  <Image src="/Dw_web_Logo.avif" alt="DreamWorks Direct" width={130} height={40} className="object-contain brightness-200" />
-                </div>
-                <p className="text-gray-500 text-sm leading-relaxed mb-5">
-                  Nigeria's #1 tech marketplace. 22 years of authentic technology.
+        {/* === FOOTER === */}
+        <footer className="relative" style={{ background: "#081530" }}>
+          <div className="max-w-7xl mx-auto px-6 py-14">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
+              {/* Brand */}
+              <div className="col-span-2 md:col-span-1 lg:col-span-1">
+                <Image src="/Dw_web_Logo.avif" alt="DreamWorks" width={120} height={40} className="mb-4 brightness-0 invert" />
+                <p className="text-blue-200/60 text-xs leading-relaxed mb-4">
+                  Your trusted destination for premium tech products since 2004.
                 </p>
-                <div className="flex gap-2 flex-wrap">
-                  {SOCIAL_LINKS.map((s) => (
-                    <a key={s.name} href={s.href} target="_blank" rel="noopener noreferrer" title={s.name} className="w-9 h-9 rounded-xl flex items-center justify-center hover:scale-110 transition-transform shadow-lg" style={{ background: s.bg }}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                        <path d={s.svgPath} />
+                <div className="flex gap-2">
+                  {SOCIAL_LINKS.map((social) => (
+                    <a key={social.name} href={social.href} target="_blank" rel="noopener noreferrer"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform hover:scale-110"
+                      style={{ background: typeof social.bg === "string" && social.bg.includes("gradient") ? social.bg : social.bg }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d={social.svgPath} />
                       </svg>
                     </a>
                   ))}
                 </div>
               </div>
 
+              {/* Shop */}
               <div>
-                <h4 className="font-bold text-white mb-4 text-xs uppercase tracking-widest">Collections</h4>
-                <ul className="space-y-2">
-                  <li><Link href="/collections/accessories" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">Accessories</Link></li>
-                  <li><Link href="/collections/computing-accessories" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">Computing Accessories</Link></li>
-                  <li><Link href="/collections/consumer-electronics" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">Consumer Electronics</Link></li>
-                  <li><Link href="/collections/enterprise" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">Enterprise</Link></li>
-                  <li><Link href="/collections/mobile-tablet" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">Mobile & Tablet</Link></li>
-                  <li><Link href="/collections/power" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">Power</Link></li>
-                  <li><Link href="/collections/smart-devices" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">Smart Devices</Link></li>
-                  <li><Link href="/collections/surveillance" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">Surveillance</Link></li>
-                </ul>
+                <h4 className="text-white text-xs font-bold uppercase tracking-widest mb-4">Shop</h4>
+                <div className="space-y-2.5">
+                  {["Accessories", "Computing Accessories", "Consumer Electronics", "Enterprise", "Mobile & Tablet", "Power", "Smart Devices", "Surveillance"].map((cat) => (
+                    <Link key={cat} href={`/collections/${cat.toLowerCase().replace(/ & /g, "-").replace(/ /g, "-")}`}
+                      className="block text-blue-200/60 text-xs hover:text-white transition-colors">{cat}</Link>
+                  ))}
+                </div>
               </div>
 
+              {/* Company */}
               <div>
-                <h4 className="font-bold text-white mb-4 text-xs uppercase tracking-widest">Information</h4>
-                <ul className="space-y-2">
-                  <li><Link href="/about" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">About Us</Link></li>
-                  <li><Link href="/blog" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">Blog / News</Link></li>
-                  <li><Link href="/dreampoints" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">DreamPoints</Link></li>
-                  <li><Link href="/policies/refund" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">Refund Policy</Link></li>
-                  <li><Link href="/policies/privacy" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
-                  <li><Link href="/policies/terms" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">Terms of Service</Link></li>
-                  <li><Link href="/policies/shipping" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">Shipping Policy</Link></li>
-                  <li><Link href="/contact" className="text-sm text-gray-500 hover:text-blue-400 transition-colors">Contact Us</Link></li>
-                </ul>
+                <h4 className="text-white text-xs font-bold uppercase tracking-widest mb-4">Company</h4>
+                <div className="space-y-2.5">
+                  {[
+                    { label: "About Us", href: "/about" },
+                    { label: "Blog / News", href: "/blog" },
+                    { label: "DreamPoints", href: "/dreampoints" },
+                    { label: "Contact Us", href: "/contact" },
+                  ].map((link) => (
+                    <Link key={link.label} href={link.href} className="block text-blue-200/60 text-xs hover:text-white transition-colors">{link.label}</Link>
+                  ))}
+                </div>
               </div>
 
+              {/* Policies */}
               <div>
-                <h4 className="font-bold text-white mb-4 text-xs uppercase tracking-widest">Contact</h4>
-                <ul className="space-y-2.5 text-sm text-gray-500 mb-6">
-                  <li>📍 83 Adeniyi Jones Avenue, Ikeja, Lagos</li>
-                  <li>📞 +234 912 758 5071</li>
-                  <li>📞 +234 907 040 2023</li>
-                  <li className="break-all">✉️ ecommerce@dreamworksdirect.com</li>
-                </ul>
-                <h4 className="font-bold text-white mb-3 text-xs uppercase tracking-widest">Newsletter</h4>
+                <h4 className="text-white text-xs font-bold uppercase tracking-widest mb-4">Policies</h4>
+                <div className="space-y-2.5">
+                  {[
+                    { label: "Refund Policy", href: "/policies/refund" },
+                    { label: "Privacy Policy", href: "/policies/privacy" },
+                    { label: "Terms of Service", href: "/policies/terms" },
+                    { label: "Shipping Policy", href: "/policies/shipping" },
+                  ].map((link) => (
+                    <Link key={link.label} href={link.href} className="block text-blue-200/60 text-xs hover:text-white transition-colors">{link.label}</Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Newsletter */}
+              <div>
+                <h4 className="text-white text-xs font-bold uppercase tracking-widest mb-4">Stay Updated</h4>
+                <p className="text-blue-200/60 text-xs mb-3">Get the latest deals and tech news.</p>
                 <div className="flex gap-2">
-                  <input type="email" placeholder="Your email" className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-blue-500/50 min-w-0" />
-                  <button className="px-4 py-2.5 bg-blue-700 text-white text-sm font-bold rounded-xl hover:bg-blue-600 transition-colors flex-shrink-0">→</button>
+                  <input type="email" placeholder="Your email" className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2.5 rounded-xl text-xs font-bold transition-colors">→</button>
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-white/5 pt-6 flex flex-col md:flex-row justify-between items-center gap-2 text-xs text-gray-600">
-              <p>© 2026 Dreamworks Direct · Dreamworks Integrated Systems Ltd. All rights reserved.</p>
-              <p>Mastercard · Visa · Paystack · Pay Small Small</p>
+            {/* Bottom */}
+            <div className="border-t border-white/5 mt-12 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+              <p className="text-blue-200/40 text-xs">© 2024 DreamWorks Direct. All rights reserved.</p>
+              <div className="flex items-center gap-3">
+                {["Visa", "Mastercard", "Verve", "Paystack"].map((method) => (
+                  <span key={method} className="text-blue-200/30 text-[10px] font-semibold bg-white/5 px-2 py-1 rounded">{method}</span>
+                ))}
+              </div>
             </div>
           </div>
         </footer>
+
+        {/* === FLOATING ELEMENTS (UNTOUCHED) === */}
         <FloatingElements />
       </div>
     </>

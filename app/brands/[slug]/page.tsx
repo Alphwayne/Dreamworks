@@ -5,7 +5,6 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { ProductCard } from "@/components/ProductCard";
 import { getProductsByBrand } from "@/lib/api/brands";
 import Link from "next/link";
-
 type Props = {
     params: { slug: string };
 };
