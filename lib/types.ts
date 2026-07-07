@@ -75,12 +75,13 @@ export interface Customer {
 }
 
 // Category map — matches your actual database categories
+// Slugs are aligned with Header navigation for seamless routing
 export const CATEGORY_MAP: Record<string, { label: string; slug: string; icon: string }> = {
     "ACCESSORIES": { label: "Accessories", slug: "accessories", icon: "🔌" },
     "APPLE": { label: "Apple Products", slug: "apple", icon: "🍎" },
-    "COMPUTING ACCESSORIES": { label: "Computing Accessories", slug: "computing-accessories", icon: "💻" },
-    "CONSUMER ELECTRONICS": { label: "Consumer Electronics", slug: "consumer-electronics", icon: "📺" },
-    "ENTERPRISE": { label: "Enterprise", slug: "enterprise", icon: "🏢" },
+    "COMPUTING ACCESSORIES": { label: "Computing & Printing", slug: "computing-printing", icon: "💻" },
+    "CONSUMER ELECTRONICS": { label: "Electronics", slug: "electronics", icon: "📺" },
+    "ENTERPRISE": { label: "Enterprise & Security", slug: "enterprise", icon: "🏢" },
     "FACTORY RECERTIFIED": { label: "Factory Recertified", slug: "factory-recertified", icon: "🔄" },
     "HP BRAND": { label: "HP Brand", slug: "hp-brand", icon: "🖥️" },
     "MOBILE & TABLET": { label: "Mobile & Tablet", slug: "mobile-tablet", icon: "📱" },
@@ -92,10 +93,21 @@ export const CATEGORY_MAP: Record<string, { label: string; slug: string; icon: s
 };
 
 // Reverse map — slug to DB category value
-export const SLUG_TO_CATEGORY: Record<string, string> = Object.entries(CATEGORY_MAP).reduce(
-    (acc, [dbCat, info]) => ({ ...acc, [info.slug]: dbCat }),
-    {}
-);
+// Includes extra aliases so Header nav slugs always resolve to a valid DB category
+export const SLUG_TO_CATEGORY: Record<string, string> = {
+    // Auto-generated from CATEGORY_MAP
+    ...Object.entries(CATEGORY_MAP).reduce(
+        (acc, [dbCat, info]) => ({ ...acc, [info.slug]: dbCat }),
+        {} as Record<string, string>
+    ),
+    // Aliases for Header navigation compatibility
+    "computing-accessories": "COMPUTING ACCESSORIES",
+    "consumer-electronics": "CONSUMER ELECTRONICS",
+    "smart-devices": "ENTERPRISE",
+    "surveillance": "ENTERPRISE",
+    "office-essentials": "ACCESSORIES",
+    "health-personal-care": "CONSUMER ELECTRONICS",
+};
 
 // Category placeholder images
 export const CATEGORY_IMAGES: Record<string, string> = {
@@ -103,14 +115,14 @@ export const CATEGORY_IMAGES: Record<string, string> = {
     "APPLE": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=75",
     "COMPUTING ACCESSORIES": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&q=75",
     "CONSUMER ELECTRONICS": "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&q=75",
-    "ENTERPRISE": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=75",
+    "ENTERPRISE": "https://images.unsplash.com/photo-1558002038-1055907df827?w=400&q=75",
     "FACTORY RECERTIFIED": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&q=75",
     "HP BRAND": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&q=75",
     "MOBILE & TABLET": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=75",
     "OPEN BOX": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=75",
     "OTHER BRAND": "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&q=75",
     "POWER": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=75",
-    "PRINT & SUPPLIES": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=75",
+    "PRINT & SUPPLIES": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&q=75",
     "USED": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&q=75",
 };
 

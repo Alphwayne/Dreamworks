@@ -34,14 +34,18 @@ const PAGE_SIZE = 24;
 // Gradient mapping for hero backgrounds
 const GRADIENT_MAP: Record<string, string> = {
     "accessories": "from-blue-950 via-blue-800 to-indigo-900",
+    "apple": "from-gray-950 via-gray-800 to-slate-900",
     "computing-printing": "from-indigo-950 via-indigo-800 to-purple-900",
     "electronics": "from-purple-950 via-purple-800 to-rose-900",
+    "enterprise": "from-slate-950 via-slate-800 to-gray-900",
+    "factory-recertified": "from-emerald-950 via-emerald-800 to-teal-900",
+    "hp-brand": "from-blue-950 via-blue-800 to-cyan-900",
     "mobile-tablet": "from-teal-950 via-teal-800 to-blue-900",
+    "open-box": "from-amber-950 via-amber-800 to-orange-900",
+    "other-brand": "from-violet-950 via-violet-800 to-purple-900",
     "power": "from-orange-950 via-orange-800 to-amber-900",
-    "smart-devices": "from-emerald-950 via-emerald-800 to-teal-900",
-    "surveillance": "from-slate-950 via-slate-800 to-gray-900",
-    "office-essentials": "from-blue-950 via-indigo-800 to-purple-900",
-    "health-personal-care": "from-rose-950 via-rose-800 to-purple-900",
+    "print-supplies": "from-cyan-950 via-cyan-800 to-blue-900",
+    "used": "from-stone-950 via-stone-800 to-gray-900",
 };
 
 export default function CollectionPage() {

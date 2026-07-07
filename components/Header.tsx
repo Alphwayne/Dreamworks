@@ -52,14 +52,13 @@ const BRANDS_DROPDOWN: string[] = [
 
 const MAIN_CATEGORIES = [
     { name: "Accessories", slug: "accessories" },
+    { name: "Apple Products", slug: "apple" },
     { name: "Computing & Printing", slug: "computing-printing" },
     { name: "Electronics", slug: "electronics" },
-    { name: "Mobile Devices", slug: "mobile-tablet" },
+    { name: "Enterprise & Security", slug: "enterprise" },
+    { name: "Mobile & Tablet", slug: "mobile-tablet" },
     { name: "Power", slug: "power" },
-    { name: "Smart Devices", slug: "smart-devices" },
-    { name: "Surveillance", slug: "surveillance" },
-    { name: "Office Essentials", slug: "office-essentials" },
-    { name: "Health & Personal Care", slug: "health-personal-care" },
+    { name: "Print & Supplies", slug: "print-supplies" },
 ];
 
 // ─── COMPLETE SUB-CATEGORIES ────────────────────────────────────
@@ -117,13 +116,21 @@ const SUB_CATEGORIES: Record<string, { name: string; href: string; brands?: stri
         { name: "Power Brands", href: "/collections/power?sub=Power Brands", brands: ["APC", "Mercury", "Vertiv", "Grovolt"] },
         { name: "Generators", href: "/collections/power?sub=Generators" },
     ],
-    "smart-devices": [
-        { name: "Smart Home", href: "/collections/smart-devices?sub=Smart Home" },
-        { name: "Smart Watch", href: "/collections/smart-devices?sub=Smart Watch" },
+    "enterprise": [
+        { name: "CCTV & Cameras", href: "/collections/enterprise?sub=CCTV" },
+        { name: "Access Control", href: "/collections/enterprise?sub=Access Control" },
+        { name: "Smart Home", href: "/collections/enterprise?sub=Smart Home" },
+        { name: "Door Locks", href: "/collections/enterprise?sub=Door Locks" },
     ],
-    "surveillance": [
-        { name: "CCTV", href: "/collections/surveillance?sub=CCTV" },
-        { name: "Metal Detectors", href: "/collections/surveillance?sub=Metal Detectors" },
+    "apple": [
+        { name: "iPhones", href: "/collections/apple?sub=iPhones", brands: ["Apple"] },
+        { name: "iPads", href: "/collections/apple?sub=iPads", brands: ["Apple"] },
+        { name: "MacBooks", href: "/collections/apple?sub=MacBooks", brands: ["Apple"] },
+        { name: "Accessories", href: "/collections/apple?sub=Accessories" },
+    ],
+    "print-supplies": [
+        { name: "Printers", href: "/collections/print-supplies?sub=Printers", brands: ["Canon", "HP"] },
+        { name: "Ink & Toner", href: "/collections/print-supplies?sub=Ink & Toner" },
     ],
 };
 

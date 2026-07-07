@@ -129,7 +129,7 @@ async function getBundles() {
   const bundleConfigs = [
     { title: "Home Office", icon: "💻", description: "Everything you need for a productive workspace", categories: ["COMPUTING ACCESSORIES", "POWER", "ACCESSORIES"] },
     { title: "Smart Home", icon: "🏠", description: "Transform your home into a connected space", categories: ["ENTERPRISE", "ACCESSORIES", "POWER"] },
-    { title: "Mobile Life", icon: "📱", description: "Stay connected and powered up on the go", categories: ["MOBILE DEVICES", "ACCESSORIES", "POWER"] },
+    { title: "Mobile Life", icon: "📱", description: "Stay connected and powered up on the go", categories: ["MOBILE & TABLET", "ACCESSORIES", "POWER"] },
   ];
 
   const bundles = await Promise.all(
@@ -160,11 +160,11 @@ async function getBundles() {
 async function getMixedProducts() {
   const categories = [
     "COMPUTING ACCESSORIES",
-    "MOBILE DEVICES",
+    "MOBILE & TABLET",
     "ENTERPRISE",
     "ACCESSORIES",
     "POWER",
-    "SURVEILLANCE",
+    "CONSUMER ELECTRONICS",
   ];
   const results = await Promise.all(
     categories.map((cat) =>
@@ -470,9 +470,18 @@ export default async function Home() {
               <div>
                 <h4 className="text-white text-xs font-bold uppercase tracking-widest mb-4">Shop</h4>
                 <div className="space-y-2.5">
-                  {["Accessories", "Computing Accessories", "Consumer Electronics", "Enterprise", "Mobile & Tablet", "Power", "Smart Devices", "Surveillance"].map((cat) => (
-                    <Link key={cat} href={`/collections/${cat.toLowerCase().replace(/ & /g, "-").replace(/ /g, "-")}`}
-                      className="block text-blue-200/60 text-xs hover:text-white transition-colors">{cat}</Link>
+                  {[
+                    { label: "Accessories", slug: "accessories" },
+                    { label: "Apple Products", slug: "apple" },
+                    { label: "Computing & Printing", slug: "computing-printing" },
+                    { label: "Electronics", slug: "electronics" },
+                    { label: "Enterprise & Security", slug: "enterprise" },
+                    { label: "Mobile & Tablet", slug: "mobile-tablet" },
+                    { label: "Power", slug: "power" },
+                    { label: "Print & Supplies", slug: "print-supplies" },
+                  ].map((cat) => (
+                    <Link key={cat.slug} href={`/collections/${cat.slug}`}
+                      className="block text-blue-200/60 text-xs hover:text-white transition-colors">{cat.label}</Link>
                   ))}
                 </div>
               </div>
