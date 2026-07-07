@@ -61,7 +61,6 @@ export function HeroSlider() {
                         priority
                         sizes="100vw"
                         quality={100}
-                        unoptimized
                     />
 
                     {/* Gradient overlay */}

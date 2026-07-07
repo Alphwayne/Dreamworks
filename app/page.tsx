@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header";
 import { HeroSlider } from "@/components/HeroSlider";
+import { CategoryStrip } from "@/components/CategoryStrip";
 import { FloatingElements } from "@/components/FloatingElements";
 import { ProductCard } from "@/components/ProductCard";
 import { CartDrawer } from "@/components/CartDrawer";
@@ -18,6 +19,9 @@ import {
 import { CATEGORY_MAP } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
+
+// ISR: Revalidate every 10 minutes for fast loads with fresh data
+export const revalidate = 600;
 
 const BLOG_PREVIEWS = [
   {
@@ -157,6 +161,20 @@ async function getBundles() {
   return bundles.filter((b) => b.products.length >= 3);
 }
 
+// Category data for the visual category strip
+const CATEGORY_STRIP_DATA = [
+  { label: "Computing", slug: "computing-printing", image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&q=75" },
+  { label: "Mobile & Tablet", slug: "mobile-tablet", image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&q=75" },
+  { label: "Electronics", slug: "electronics", image: "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=300&q=75" },
+  { label: "Enterprise", slug: "enterprise", image: "https://images.unsplash.com/photo-1558002038-1055907df827?w=300&q=75" },
+  { label: "Apple", slug: "apple", image: "https://images.unsplash.com/photo-1491933382434-500287f9b54b?w=300&q=75" },
+  { label: "Power & UPS", slug: "power", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=75" },
+  { label: "Accessories", slug: "accessories", image: "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=300&q=75" },
+  { label: "Print & Supplies", slug: "print-supplies", image: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=300&q=75" },
+  { label: "HP Brand", slug: "hp-brand", image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&q=75" },
+  { label: "Open Box", slug: "open-box", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=75" },
+];
+
 async function getMixedProducts() {
   const categories = [
     "COMPUTING ACCESSORIES",
@@ -219,6 +237,11 @@ export default async function Home() {
         </div>
 
         <div className="h-8 md:h-12" />
+
+        {/* === CATEGORY STRIP === */}
+        <div className="px-4 max-w-7xl mx-auto mb-8">
+          <CategoryStrip categories={CATEGORY_STRIP_DATA} />
+        </div>
 
         {/* === NEW: JUST LAUNCHED BENTO GRID === */}
         <JustLaunched products={justLaunched} />

@@ -14,14 +14,18 @@ interface ProductCardProps {
 // Map category to a brand accent color
 const CATEGORY_COLORS: Record<string, { dot: string; badge: string; text: string }> = {
     "COMPUTING ACCESSORIES": { dot: "bg-blue-600", badge: "bg-blue-50 text-blue-700 border-blue-100", text: "text-blue-700" },
-    "MOBILE DEVICES": { dot: "bg-purple-600", badge: "bg-purple-50 text-purple-700 border-purple-100", text: "text-purple-700" },
+    "MOBILE & TABLET": { dot: "bg-purple-600", badge: "bg-purple-50 text-purple-700 border-purple-100", text: "text-purple-700" },
     "ENTERPRISE": { dot: "bg-indigo-600", badge: "bg-indigo-50 text-indigo-700 border-indigo-100", text: "text-indigo-700" },
     "ACCESSORIES": { dot: "bg-slate-600", badge: "bg-slate-50 text-slate-700 border-slate-100", text: "text-slate-700" },
     "POWER": { dot: "bg-orange-500", badge: "bg-orange-50 text-orange-700 border-orange-100", text: "text-orange-700" },
-    "SMART DEVICES": { dot: "bg-teal-600", badge: "bg-teal-50 text-teal-700 border-teal-100", text: "text-teal-700" },
-    "SURVEILLANCE": { dot: "bg-gray-700", badge: "bg-gray-50 text-gray-700 border-gray-100", text: "text-gray-700" },
-    "OFFICE ESSENTIALS": { dot: "bg-emerald-600", badge: "bg-emerald-50 text-emerald-700 border-emerald-100", text: "text-emerald-700" },
-    "HEALTH & PERSONAL CARE": { dot: "bg-rose-500", badge: "bg-rose-50 text-rose-700 border-rose-100", text: "text-rose-700" },
+    "CONSUMER ELECTRONICS": { dot: "bg-teal-600", badge: "bg-teal-50 text-teal-700 border-teal-100", text: "text-teal-700" },
+    "APPLE": { dot: "bg-gray-800", badge: "bg-gray-50 text-gray-800 border-gray-200", text: "text-gray-800" },
+    "HP BRAND": { dot: "bg-blue-700", badge: "bg-blue-50 text-blue-800 border-blue-100", text: "text-blue-800" },
+    "PRINT & SUPPLIES": { dot: "bg-emerald-600", badge: "bg-emerald-50 text-emerald-700 border-emerald-100", text: "text-emerald-700" },
+    "FACTORY RECERTIFIED": { dot: "bg-amber-600", badge: "bg-amber-50 text-amber-700 border-amber-100", text: "text-amber-700" },
+    "OPEN BOX": { dot: "bg-cyan-600", badge: "bg-cyan-50 text-cyan-700 border-cyan-100", text: "text-cyan-700" },
+    "OTHER BRAND": { dot: "bg-gray-500", badge: "bg-gray-50 text-gray-600 border-gray-100", text: "text-gray-600" },
+    "USED": { dot: "bg-rose-500", badge: "bg-rose-50 text-rose-700 border-rose-100", text: "text-rose-700" },
 };
 
 export function ProductCard({ product }: ProductCardProps) {
@@ -49,6 +53,9 @@ export function ProductCard({ product }: ProductCardProps) {
                         src={image}
                         alt={product.product_name}
                         fill
+                        loading="lazy"
+                        placeholder="blur"
+                        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjFmNWY5Ii8+PC9zdmc+"
                         className="object-contain p-4 group-hover:scale-110 transition-transform duration-600 ease-out"
                         sizes="(max-width:640px) 50vw,(max-width:1024px) 33vw,25vw"
                     />
