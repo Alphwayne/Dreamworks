@@ -94,16 +94,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         checkAuth();
 
-        // Safety timeout - if auth takes more than 3 seconds, show content anyway
+        // Safety timeout - if auth takes more than 1.5 seconds, show content anyway
+        // This prevents the infinite "Verifying access..." state
         const timeout = setTimeout(() => {
-            if (loading) {
-                setLoading(false);
-                setRole("admin"); // Default to admin view
-            }
-        }, 3000);
+            setLoading(false);
+            if (!role) setRole("admin"); // Default to admin view on timeout
+        }, 1500);
 
         return () => clearTimeout(timeout);
-    }, [pathname, checkAuth]);
+    }, [pathname, checkAuth, role]);
 
     async function handleSignOut() {
         await supabase.auth.signOut();
@@ -119,8 +118,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return (
             <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #0a0e1a 0%, #0d1b3e 30%, #0a1628 60%, #060b14 100%)" }}>
                 <div className="text-center">
-                    <div className="w-10 h-10 border-2 border-blue-500/30 border-t-blue-400 rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-blue-200/40 text-xs font-medium tracking-wide">Loading...</p>
+                    <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-400 rounded-full animate-spin mx-auto" />
                 </div>
             </div>
         );

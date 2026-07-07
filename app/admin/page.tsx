@@ -230,7 +230,7 @@ export default function AdminDashboard() {
                                             #{order.order_number?.slice(-3)}
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-sm text-gray-900">{order.shipping_name || order.email?.split("@")[0]}</p>
+                                            <p className="font-semibold text-sm text-gray-900">{order.billing_name || order.shipping_name || order.email?.split("@")[0]}</p>
                                             <p className="text-[11px] text-gray-400 font-medium">{new Date(order.created_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
                                         </div>
                                     </div>

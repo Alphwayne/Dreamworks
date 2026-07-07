@@ -11,7 +11,7 @@ import {
 interface AnalyticsData {
     dailyRevenue: { date: string; revenue: number; orders: number }[];
     categoryBreakdown: { category: string; count: number; revenue: number }[];
-    topCustomers: { email: string; name: string; total_spent: number; orders_count: number }[];
+    topCustomers: { email: string; name: string; total_spent: number; total_orders: number }[];
     paymentMethods: { method: string; count: number }[];
     fulfillmentStats: { status: string; count: number }[];
     monthlyGrowth: number;
@@ -70,14 +70,14 @@ export default function AnalyticsPage() {
         // Top customers
         const { data: topCust } = await supabase
             .from("customers")
-            .select("email, first_name, last_name, total_spent, orders_count")
+            .select("email, first_name, last_name, total_spent, total_orders")
             .order("total_spent", { ascending: false })
             .limit(5);
         const topCustomers = (topCust || []).map((c) => ({
             email: c.email,
             name: `${c.first_name} ${c.last_name}`.trim(),
             total_spent: c.total_spent,
-            orders_count: c.orders_count,
+            total_orders: c.total_orders,
         }));
 
         // Payment methods
@@ -224,7 +224,7 @@ export default function AnalyticsPage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-gray-900 truncate">{customer.name || customer.email}</p>
-                                    <p className="text-xs text-gray-400">{customer.orders_count} orders</p>
+                                    <p className="text-xs text-gray-400">{customer.total_orders} orders</p>
                                 </div>
                                 <span className="text-sm font-bold text-blue-700">{formatPrice(customer.total_spent)}</span>
                             </div>

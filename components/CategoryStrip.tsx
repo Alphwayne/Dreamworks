@@ -19,7 +19,7 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const [isPaused, setIsPaused] = useState(false);
     const animationRef = useRef<number>();
-    const scrollSpeed = 0.6; // pixels per frame
+    const scrollSpeed = 0.8;
 
     useEffect(() => {
         const container = scrollRef.current;
@@ -28,7 +28,6 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
         function animate() {
             if (!isPaused && container) {
                 container.scrollLeft += scrollSpeed;
-                // Reset scroll when reaching halfway (we duplicate items for infinite loop)
                 if (container.scrollLeft >= container.scrollWidth / 2) {
                     container.scrollLeft = 0;
                 }
@@ -42,25 +41,23 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
         };
     }, [isPaused]);
 
-    // Duplicate categories for infinite scroll effect
     const displayCategories = [...categories, ...categories];
 
     return (
-        <section className="relative py-2">
-            {/* Auto-scrolling container */}
+        <section className="relative py-6 bg-gradient-to-b from-gray-50/80 to-white">
             <div
                 className="relative overflow-hidden"
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
             >
                 {/* Fade edges */}
-                <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-                <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+                <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none" />
+                <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white via-white/80 to-transparent z-10 pointer-events-none" />
 
                 {/* Scrolling row */}
                 <div
                     ref={scrollRef}
-                    className="flex gap-5 overflow-x-hidden"
+                    className="flex gap-4 overflow-x-hidden px-4"
                     style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                 >
                     {displayCategories.map((cat, idx) => (
@@ -69,26 +66,31 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
                             href={`/collections/${cat.slug}`}
                             className="flex-shrink-0 group/card"
                         >
-                            <div className="w-[140px] md:w-[160px] text-center">
-                                {/* Image Container - circular with gradient ring */}
-                                <div className="relative w-[110px] h-[110px] md:w-[130px] md:h-[130px] mx-auto rounded-full overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100 border-2 border-gray-100 group-hover/card:border-blue-400 group-hover/card:shadow-xl group-hover/card:shadow-blue-500/15 transition-all duration-400 mb-3">
-                                    {/* Animated gradient ring on hover */}
-                                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover/card:opacity-100 transition-opacity duration-400" style={{ padding: "2px" }}>
-                                        <div className="w-full h-full rounded-full bg-white" />
-                                    </div>
-                                    <Image
-                                        src={cat.image}
-                                        alt={cat.label}
-                                        fill
-                                        className="object-contain p-4 group-hover/card:scale-110 transition-transform duration-500 relative z-[1]"
-                                        sizes="130px"
-                                        quality={100}
-                                    />
-                                </div>
+                            <div className="relative w-[180px] md:w-[210px] h-[120px] md:h-[140px] rounded-2xl overflow-hidden bg-gray-100 shadow-sm group-hover/card:shadow-xl group-hover/card:shadow-blue-500/10 transition-all duration-500 group-hover/card:-translate-y-1">
+                                {/* Background image */}
+                                <Image
+                                    src={cat.image}
+                                    alt={cat.label}
+                                    fill
+                                    className="object-cover group-hover/card:scale-110 transition-transform duration-700"
+                                    sizes="210px"
+                                    quality={100}
+                                />
+                                {/* Gradient overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                                {/* Top accent line */}
+                                <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
                                 {/* Label */}
-                                <p className="text-xs font-bold text-gray-800 group-hover/card:text-blue-700 transition-colors duration-200 line-clamp-1 tracking-tight">
-                                    {cat.label}
-                                </p>
+                                <div className="absolute bottom-0 left-0 right-0 p-3">
+                                    <p className="text-white font-bold text-sm tracking-tight drop-shadow-lg">
+                                        {cat.label}
+                                    </p>
+                                    {cat.count !== undefined && (
+                                        <p className="text-white/60 text-[10px] font-medium mt-0.5">
+                                            {cat.count} products
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </Link>
                     ))}

@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, ChevronRight, Star, Truck, RefreshCw, Shield, Phone } from "lucide-react";
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+
 import { FloatingElements } from "@/components/FloatingElements";
 import { CartDrawer } from "@/components/CartDrawer";
 import { ProductCard } from "@/components/ProductCard";
@@ -286,7 +286,7 @@ export default function ProductDetailPage() {
                     </button>
                 </div>
 
-                <BottomNav />
+                
                 <FloatingElements />
             </div>
         </>

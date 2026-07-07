@@ -42,7 +42,7 @@ export function TrendingNow({ products }: { products: TrendingProduct[] }) {
                     const discount = product.compare_price
                         ? Math.round(((product.compare_price - product.selling_price) / product.compare_price) * 100)
                         : 0;
-                    const viewers = Math.floor(Math.random() * 30) + 5;
+                    const viewers = ((product.id * 7 + index * 13) % 30) + 5;
 
                     return (
                         <Link

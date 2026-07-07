@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice, getProductImage } from "@/lib/types";
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
@@ -101,7 +101,7 @@ export default function CartPage() {
                     </div>
                 )}
             </div>
-            <BottomNav />
+            
         </div>
     );
 }

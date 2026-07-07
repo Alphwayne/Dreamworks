@@ -1,5 +1,5 @@
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+
 import { CartDrawer } from "@/components/CartDrawer";
 import { FileText } from "lucide-react";
 
@@ -60,7 +60,7 @@ export default function TermsPage() {
                         </Section>
                     </div>
                 </div>
-                <BottomNav />
+                
             </div>
         </>
     );

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Package, LogOut, User, ChevronRight, Star, Gift, ShoppingBag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+
 import { CartDrawer } from "@/components/CartDrawer";
 import { formatPrice } from "@/lib/types";
 
@@ -205,7 +205,7 @@ export default function AccountPage() {
                     </div>
                 </div>
 
-                <BottomNav />
+                
             </div>
         </>
     );

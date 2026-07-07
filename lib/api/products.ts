@@ -33,7 +33,10 @@ export async function getProducts({
     }
 
     const { data, error, count } = await query;
-    if (error) throw error;
+    if (error) {
+        console.error("[getProducts] Supabase error:", error.message, error.details, error.hint);
+        throw error;
+    }
     return { products: data as Product[], count: count || 0 };
 }
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+
 import { CartDrawer } from "@/components/CartDrawer";
 import { supabase } from "@/lib/supabase";
 import { Star, Gift, ShoppingBag, Share2, ChevronRight } from "lucide-react";
@@ -147,7 +147,7 @@ export default function DreamPointsPage() {
                     )}
                 </div>
 
-                <BottomNav />
+                
             </div>
         </>
     );

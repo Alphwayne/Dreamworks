@@ -1,5 +1,5 @@
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+
 import { CartDrawer } from "@/components/CartDrawer";
 import { RotateCcw } from "lucide-react";
 
@@ -52,7 +52,7 @@ export default function RefundPolicyPage() {
                         </Section>
                     </div>
                 </div>
-                <BottomNav />
+                
             </div>
         </>
     );

@@ -70,7 +70,7 @@ export interface Customer {
     province: string;
     country: string;
     total_spent: number;
-    orders_count: number;
+    total_orders: number;
     created_at: string;
 }
 

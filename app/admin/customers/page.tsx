@@ -80,7 +80,7 @@ export default function AdminCustomersPage() {
                                         <td className="px-4 py-3 text-xs text-gray-600">{c.city || "—"}</td>
                                         <td className="px-4 py-3">
                                             <span className="text-xs font-semibold bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
-                                                {c.orders_count || 0}
+                                                {c.total_orders || 0}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 font-bold text-blue-700 text-xs">

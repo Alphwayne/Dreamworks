@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+
 import { CartDrawer } from "@/components/CartDrawer";
 import { supabase } from "@/lib/supabase";
 import { Heart, MessageCircle, Share2, Clock, User, Tag, ChevronRight, Search } from "lucide-react";
@@ -328,7 +328,7 @@ export default function BlogPage() {
                     )}
                 </div>
 
-                <BottomNav />
+                
             </div>
         </>
     );

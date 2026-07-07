@@ -1,5 +1,5 @@
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+
 import { CartDrawer } from "@/components/CartDrawer";
 import { FloatingElements } from "@/components/FloatingElements";
 import { supabase } from "@/lib/supabase";
@@ -116,7 +116,7 @@ export default async function BrandsPage() {
                     </div>
                 </div>
 
-                <BottomNav />
+                
                 <FloatingElements />
             </div>
         </>

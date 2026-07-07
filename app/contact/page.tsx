@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+
 import { CartDrawer } from "@/components/CartDrawer";
 import { MapPin, Phone, Mail, Clock, Send, MessageCircle } from "lucide-react";
 
@@ -145,7 +145,7 @@ export default function ContactPage() {
                     </div>
                 </div>
 
-                <BottomNav />
+                
             </div>
         </>
     );

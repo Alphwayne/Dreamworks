@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+
 import { CartDrawer } from "@/components/CartDrawer";
 import { Heart, Share2, MessageCircle, Clock, ChevronLeft, Send, User } from "lucide-react";
 
@@ -320,7 +320,7 @@ export default function BlogPostPage() {
                     </div>
                 </div>
 
-                <BottomNav />
+                
             </div>
         </>
     );

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+
 import { FloatingElements } from "@/components/FloatingElements";
 import { CartDrawer } from "@/components/CartDrawer";
 import { ProductCard } from "@/components/ProductCard";
@@ -144,7 +144,7 @@ export default function SearchPage() {
                 }>
                     <SearchContent />
                 </Suspense>
-                <BottomNav />
+                
                 <FloatingElements />
             </div>
         </>

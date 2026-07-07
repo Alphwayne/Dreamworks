@@ -1,12 +1,11 @@
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
-import { FloatingElements } from "@/components/FloatingElements";
+
 import { CartDrawer } from "@/components/CartDrawer";
 import { ProductCard } from "@/components/ProductCard";
 import { getProductsByBrand } from "@/lib/api/brands";
 import Link from "next/link";
 type Props = {
-    params: { slug: string };
+    params: Promise<{ slug: string }>;
 };
 
 // Map slug to display name
@@ -63,7 +62,8 @@ const BRAND_NAMES: Record<string, string> = {
 };
 
 export default async function BrandPage({ params }: Props) {
-    const brandName = BRAND_NAMES[params.slug] || params.slug;
+    const { slug } = await params;
+    const brandName = BRAND_NAMES[slug] || slug;
     const { products, count } = await getProductsByBrand(brandName, 24, 0);
 
     return (
@@ -103,8 +103,7 @@ export default async function BrandPage({ params }: Props) {
                     )}
                 </div>
 
-                <BottomNav />
-                <FloatingElements />
+                
             </div>
         </>
     );

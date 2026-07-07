@@ -26,7 +26,7 @@ export function FloatingElements() {
                 target="_blank"
                 rel="noopener noreferrer"
                 title="Chat with us"
-                className="fixed bottom-14 right-3 sm:bottom-5 sm:right-4 z-50 flex items-center gap-2.5 bg-gradient-to-r from-blue-800 to-blue-500 text-white px-3 py-2.5 rounded-2xl shadow-xl shadow-blue-600/30 hover:shadow-blue-600/50 transition-all hover:scale-105 hover:-translate-y-0.5"
+                className="fixed bottom-5 right-3 sm:bottom-5 sm:right-4 z-50 flex items-center gap-2.5 bg-gradient-to-r from-blue-800 to-blue-500 text-white px-3 py-2.5 rounded-2xl shadow-xl shadow-blue-600/30 hover:shadow-blue-600/50 transition-all hover:scale-105 hover:-translate-y-0.5"
             >
                 <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
                     <MessageCircle size={18} className="text-white fill-white/30" />
@@ -46,7 +46,7 @@ export function FloatingElements() {
             */}
             <button
                 onClick={() => setDreamPointsOpen(true)}
-                className="fixed bottom-14 left-3 sm:bottom-5 sm:left-4 z-50 transition-all hover:scale-105 hover:-translate-y-1 group"
+                className="fixed bottom-5 left-3 sm:bottom-5 sm:left-4 z-50 transition-all hover:scale-105 hover:-translate-y-1 group"
                 title="DreamPoints"
             >
                 <div className="relative flex flex-col items-center">

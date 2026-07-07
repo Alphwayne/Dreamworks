@@ -8,8 +8,7 @@ import {
     Grid3X3, Filter, ArrowUpDown
 } from "lucide-react";
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
-import { FloatingElements } from "@/components/FloatingElements";
+
 import { CartDrawer } from "@/components/CartDrawer";
 import { ProductCard } from "@/components/ProductCard";
 import { getProducts } from "@/lib/api/products";
@@ -61,6 +60,7 @@ export default function CollectionPage() {
         ? { label: "All Products", slug: "all" }
         : CATEGORY_MAP[dbCategory || ""] || { label: categorySlug, slug: categorySlug };
 
+    const subCategory = searchParams.get("sub") || "";
     const [products, setProducts] = useState<Product[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -76,6 +76,8 @@ export default function CollectionPage() {
         setLoading(true);
         try {
             const [sortBy, sortOrder] = sort.split("-") as [string, "asc" | "desc"];
+            // Only use manual search input, NOT sub-category (product names don't match sub labels)
+            console.log("[Collections] Fetching:", { category: dbCategory, slug: categorySlug, sub: subCategory, search, sortBy, sortOrder, page });
             const { products: data, count } = await getProducts({
                 category: dbCategory,
                 search: search || undefined,
@@ -85,6 +87,8 @@ export default function CollectionPage() {
                 sortOrder,
             });
 
+            console.log("[Collections] Got", data.length, "products, total:", count);
+
             const range = PRICE_RANGES[priceRange];
             const filtered = data.filter(
                 (p) => p.selling_price >= range.min && p.selling_price <= range.max
@@ -92,12 +96,13 @@ export default function CollectionPage() {
 
             setProducts(filtered);
             setTotal(count);
-        } catch (err) {
-            console.error(err);
+        } catch (err: any) {
+            console.error("[Collections] FETCH ERROR:", err?.message || err);
+            console.error("[Collections] Category slug:", categorySlug, "→ DB category:", dbCategory);
         } finally {
             setLoading(false);
         }
-    }, [dbCategory, search, page, sort, priceRange]);
+    }, [dbCategory, categorySlug, subCategory, search, page, sort, priceRange]);
 
     useEffect(() => {
         fetchProducts();
@@ -376,8 +381,7 @@ export default function CollectionPage() {
                 {/* Mobile Filter Drawer */}
                 <FilterDrawer />
 
-                <BottomNav />
-                <FloatingElements />
+                
             </div>
         </>
     );

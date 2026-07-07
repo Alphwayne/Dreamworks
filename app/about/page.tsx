@@ -1,5 +1,5 @@
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+
 import { CartDrawer } from "@/components/CartDrawer";
 import { Shield, Award, Users, Truck, Clock, Star, MapPin, Phone, Mail } from "lucide-react";
 import Link from "next/link";
@@ -184,7 +184,7 @@ export default function AboutPage() {
                     </div>
                 </section>
 
-                <BottomNav />
+                
             </div>
         </>
     );

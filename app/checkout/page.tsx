@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, Check, Lock } from "lucide-react";
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice, getProductImage } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
@@ -250,7 +250,7 @@ export default function CheckoutPage() {
                         </div>
                     </div>
                 </div>
-                <BottomNav />
+                
             </div>
         </>
     );
