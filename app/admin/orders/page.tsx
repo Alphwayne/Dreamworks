@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { Search } from "lucide-react";
 import { formatPrice } from "@/lib/types";
 
@@ -21,20 +20,31 @@ export default function AdminOrdersPage() {
 
     async function loadOrders() {
         setLoading(true);
-        const { data } = await supabase
-            .from("orders")
-            .select("*")
-            .order("created_at", { ascending: false })
-            .limit(100);
-        setOrders(data || []);
-        setLoading(false);
+        try {
+            const res = await fetch("/api/admin/orders");
+            const json = await res.json();
+            setOrders(json.orders || []);
+        } catch (err) {
+            console.error("[Orders] Load error:", err);
+        } finally {
+            setLoading(false);
+        }
     }
 
     async function updateFulfillment(orderNumber: string, status: string) {
         setUpdating(orderNumber);
-        await supabase.from("orders").update({ fulfillment_status: status }).eq("order_number", orderNumber);
-        setOrders((prev) => prev.map((o) => o.order_number === orderNumber ? { ...o, fulfillment_status: status } : o));
-        setUpdating(null);
+        try {
+            await fetch("/api/admin/orders", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ orderNumber, fulfillmentStatus: status }),
+            });
+            setOrders((prev) => prev.map((o) => o.order_number === orderNumber ? { ...o, fulfillment_status: status } : o));
+        } catch (err) {
+            console.error("[Orders] Update error:", err);
+        } finally {
+            setUpdating(null);
+        }
     }
 
     const filtered = orders.filter((o) => {

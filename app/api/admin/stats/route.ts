@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
         // Get total orders count and revenue
         const { data: orders, error: ordersError } = await supabase
             .from("orders")
-            .select("id, total, created_at, billing_name, status");
+            .select("id, total, created_at, shipping_name, billing_name, email, financial_status, fulfillment_status");
 
         if (ordersError) {
             console.error("[API /admin/stats] Orders error:", ordersError.message);
@@ -44,28 +44,28 @@ export async function GET(request: NextRequest) {
             .select("*", { count: "exact", head: true })
             .eq("is_active", true);
 
-        // Get low stock items (inventory quantity < 5)
+        // Get low stock items (inventory available < 5) - correct field names
         const { data: lowStock } = await supabase
             .from("inventory")
-            .select("sku, quantity, warehouse")
-            .lt("quantity", 5)
-            .order("quantity", { ascending: true })
+            .select("sku, available, location")
+            .lt("available", 5)
+            .order("available", { ascending: true })
             .limit(10);
 
-        // Get top selling products from order_items
+        // Get top selling products from order_items - correct field names (lineitem_*)
         const { data: orderItems } = await supabase
             .from("order_items")
-            .select("product_name, quantity, price");
+            .select("lineitem_name, lineitem_quantity, lineitem_price");
 
         // Aggregate top products
         const productSales: Record<string, { name: string; quantity: number; revenue: number }> = {};
         (orderItems || []).forEach((item) => {
-            const key = item.product_name || "Unknown";
+            const key = item.lineitem_name || "Unknown";
             if (!productSales[key]) {
                 productSales[key] = { name: key, quantity: 0, revenue: 0 };
             }
-            productSales[key].quantity += item.quantity || 1;
-            productSales[key].revenue += (parseFloat(item.price) || 0) * (item.quantity || 1);
+            productSales[key].quantity += item.lineitem_quantity || 1;
+            productSales[key].revenue += (parseFloat(item.lineitem_price) || 0) * (item.lineitem_quantity || 1);
         });
 
         const topProducts = Object.values(productSales)
@@ -84,10 +84,10 @@ export async function GET(request: NextRequest) {
             }
         });
 
-        // Orders by status
+        // Orders by status (financial_status is the correct field)
         const ordersByStatus: Record<string, number> = {};
         (orders || []).forEach((order) => {
-            const status = order.status || "unknown";
+            const status = order.financial_status || "unknown";
             ordersByStatus[status] = (ordersByStatus[status] || 0) + 1;
         });
 

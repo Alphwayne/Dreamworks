@@ -76,10 +76,10 @@ export default function AdminDashboard() {
     }
 
     const kpiCards = [
-        { label: "Total Revenue", value: formatPrice(stats.totalRevenue), change: "+12.5%", up: true, icon: DollarSign, gradient: "from-blue-500 to-blue-700", shadow: "shadow-blue-500/20" },
-        { label: "Total Orders", value: stats.totalOrders.toLocaleString(), change: "+8.2%", up: true, icon: ShoppingCart, gradient: "from-emerald-500 to-emerald-700", shadow: "shadow-emerald-500/20" },
-        { label: "Active Products", value: stats.totalProducts.toLocaleString(), change: "+3", up: true, icon: Package, gradient: "from-violet-500 to-violet-700", shadow: "shadow-violet-500/20" },
-        { label: "Customers", value: stats.totalCustomers.toLocaleString(), change: "+156", up: true, icon: Users, gradient: "from-orange-500 to-orange-700", shadow: "shadow-orange-500/20" },
+        { label: "Total Revenue", value: formatPrice(stats.totalRevenue), change: "+12.5%", up: true, icon: DollarSign, gradient: "from-blue-500 to-blue-700", shadow: "shadow-blue-500/20", href: "/admin/analytics" },
+        { label: "Total Orders", value: stats.totalOrders.toLocaleString(), change: "+8.2%", up: true, icon: ShoppingCart, gradient: "from-blue-600 to-indigo-700", shadow: "shadow-indigo-500/20", href: "/admin/orders" },
+        { label: "Active Products", value: stats.totalProducts.toLocaleString(), change: "+3", up: true, icon: Package, gradient: "from-indigo-500 to-blue-700", shadow: "shadow-indigo-500/20", href: "/admin/products" },
+        { label: "Customers", value: stats.totalCustomers.toLocaleString(), change: "+156", up: true, icon: Users, gradient: "from-sky-500 to-blue-700", shadow: "shadow-sky-500/20", href: "/admin/customers" },
     ];
 
     if (loading) {
@@ -131,7 +131,7 @@ export default function AdminDashboard() {
                 {kpiCards.map((kpi) => {
                     const Icon = kpi.icon;
                     return (
-                        <div key={kpi.label} className="relative bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group">
+                        <Link key={kpi.label} href={kpi.href} className="relative bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group cursor-pointer block">
                             {/* Subtle gradient accent */}
                             <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${kpi.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
 
@@ -139,14 +139,14 @@ export default function AdminDashboard() {
                                 <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${kpi.gradient} flex items-center justify-center shadow-lg ${kpi.shadow}`}>
                                     <Icon size={18} className="text-white" />
                                 </div>
-                                <span className={`flex items-center gap-0.5 text-xs font-bold px-2 py-1 rounded-lg ${kpi.up ? "text-emerald-700 bg-emerald-50" : "text-red-600 bg-red-50"}`}>
+                                <span className={`flex items-center gap-0.5 text-xs font-bold px-2 py-1 rounded-lg ${kpi.up ? "text-blue-700 bg-blue-50" : "text-red-600 bg-red-50"}`}>
                                     {kpi.up ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
                                     {kpi.change}
                                 </span>
                             </div>
                             <p className="text-2xl font-bold text-gray-900 tracking-tight">{kpi.value}</p>
                             <p className="text-xs text-gray-500 mt-1.5 font-medium">{kpi.label}</p>
-                        </div>
+                        </Link>
                     );
                 })}
             </div>
@@ -164,22 +164,22 @@ export default function AdminDashboard() {
                         <p className="text-blue-200/60 text-xs mt-1.5 font-medium">{stats.todayOrders} orders today</p>
                     </div>
                 </div>
-                <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 rounded-2xl p-6 text-white shadow-lg shadow-emerald-600/20">
+                <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-800 rounded-2xl p-6 text-white shadow-lg shadow-indigo-600/20">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
                     <div className="relative">
                         <div className="flex items-center gap-2 mb-3">
-                            <TrendingUp size={14} className="text-emerald-200" />
-                            <span className="text-emerald-200 text-[11px] font-bold uppercase tracking-widest">This Week</span>
+                            <TrendingUp size={14} className="text-indigo-200" />
+                            <span className="text-indigo-200 text-[11px] font-bold uppercase tracking-widest">This Week</span>
                         </div>
                         <p className="text-2xl font-bold tracking-tight">{formatPrice(stats.weekRevenue)}</p>
-                        <p className="text-emerald-200/60 text-xs mt-1.5 font-medium">{stats.weekOrders} orders this week</p>
+                        <p className="text-indigo-200/60 text-xs mt-1.5 font-medium">{stats.weekOrders} orders this week</p>
                     </div>
                 </div>
                 <div className="relative overflow-hidden bg-gradient-to-br from-violet-600 via-violet-700 to-purple-800 rounded-2xl p-6 text-white shadow-lg shadow-violet-600/20">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
                     <div className="relative">
                         <div className="flex items-center gap-2 mb-3">
-                            <Zap size={14} className="text-violet-200" />
+                            <BarChart3 size={14} className="text-violet-200" />
                             <span className="text-violet-200 text-[11px] font-bold uppercase tracking-widest">Avg. Order</span>
                         </div>
                         <p className="text-2xl font-bold tracking-tight">{stats.totalOrders > 0 ? formatPrice(Math.round(stats.totalRevenue / stats.totalOrders)) : "₦0"}</p>
@@ -222,7 +222,7 @@ export default function AdminDashboard() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wide ${order.financial_status === "paid" ? "bg-emerald-100 text-emerald-700" :
+                                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wide ${order.financial_status === "paid" ? "bg-blue-100 text-blue-700" :
                                             order.financial_status === "pending" ? "bg-amber-100 text-amber-700" :
                                                 "bg-gray-100 text-gray-600"
                                             }`}>{order.financial_status}</span>
@@ -279,7 +279,7 @@ export default function AdminDashboard() {
                                 {stats.lowStock.map((item) => (
                                     <div key={item.sku} className="flex items-center justify-between p-3 bg-orange-50/50 rounded-xl border border-orange-100/50">
                                         <p className="text-xs font-medium text-gray-700 truncate flex-1">{item.sku || item.title}</p>
-                                        <span className="text-[11px] font-bold text-orange-600 ml-2 flex-shrink-0 bg-orange-100 px-2 py-0.5 rounded-md">{item.quantity || item.available} left</span>
+                                        <span className="text-[11px] font-bold text-orange-600 ml-2 flex-shrink-0 bg-orange-100 px-2 py-0.5 rounded-md">{item.available ?? item.quantity ?? 0} left</span>
                                     </div>
                                 ))}
                             </div>
@@ -290,17 +290,17 @@ export default function AdminDashboard() {
                     <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
                         <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center">
-                                <Zap size={14} className="text-gray-600" />
+                                <Sparkles size={14} className="text-gray-600" />
                             </div>
                             Quick Actions
                         </h2>
                         <div className="space-y-2">
                             {[
                                 { label: "Add New Product", href: "/admin/products", icon: "📦", color: "hover:bg-blue-50 hover:border-blue-100" },
-                                { label: "Manage Orders", href: "/admin/orders", icon: "🛒", color: "hover:bg-emerald-50 hover:border-emerald-100" },
-                                { label: "View Customers", href: "/admin/customers", icon: "👥", color: "hover:bg-violet-50 hover:border-violet-100" },
-                                { label: "Edit Homepage", href: "/admin/content", icon: "🎨", color: "hover:bg-orange-50 hover:border-orange-100" },
-                                { label: "View Analytics", href: "/admin/analytics", icon: "📊", color: "hover:bg-pink-50 hover:border-pink-100" },
+                                { label: "Manage Orders", href: "/admin/orders", icon: "🛒", color: "hover:bg-blue-50 hover:border-blue-100" },
+                                { label: "View Customers", href: "/admin/customers", icon: "👥", color: "hover:bg-indigo-50 hover:border-indigo-100" },
+                                { label: "Edit Homepage", href: "/admin/content", icon: "🎨", color: "hover:bg-sky-50 hover:border-sky-100" },
+                                { label: "View Analytics", href: "/admin/analytics", icon: "📊", color: "hover:bg-blue-50 hover:border-blue-100" },
                             ].map((item) => (
                                 <Link key={item.href} href={item.href}
                                     className={`flex items-center gap-3 p-3 bg-gray-50/50 rounded-xl border border-transparent transition-all duration-200 text-sm font-medium text-gray-700 ${item.color}`}>

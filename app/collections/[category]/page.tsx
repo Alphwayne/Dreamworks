@@ -45,6 +45,9 @@ const GRADIENT_MAP: Record<string, string> = {
     "power": "from-orange-950 via-orange-800 to-amber-900",
     "print-supplies": "from-cyan-950 via-cyan-800 to-blue-900",
     "used": "from-stone-950 via-stone-800 to-gray-900",
+    "creator-studio": "from-violet-950 via-purple-800 to-indigo-900",
+    "gamer-squad": "from-indigo-950 via-blue-800 to-purple-900",
+    "all": "from-blue-950 via-blue-800 to-indigo-900",
 };
 
 export default function CollectionPage() {
@@ -56,9 +59,20 @@ export default function CollectionPage() {
     const isAll = categorySlug === "all";
 
     const dbCategory = isAll ? undefined : SLUG_TO_CATEGORY[categorySlug];
+
+    // Friendly labels for tech setup and special slugs
+    const SPECIAL_LABELS: Record<string, string> = {
+        "creator-studio": "Creator Studio",
+        "gamer-squad": "Gamer Squad",
+        "best-sellers": "Best Sellers",
+        "tech-setups": "Tech Setups",
+    };
+
     const categoryInfo = isAll
         ? { label: "All Products", slug: "all" }
-        : CATEGORY_MAP[dbCategory || ""] || { label: categorySlug, slug: categorySlug };
+        : SPECIAL_LABELS[categorySlug]
+            ? { label: SPECIAL_LABELS[categorySlug], slug: categorySlug }
+            : CATEGORY_MAP[dbCategory || ""] || { label: categorySlug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()), slug: categorySlug };
 
     const subCategory = searchParams.get("sub") || "";
     const brandParam = searchParams.get("brand") || "";
@@ -73,12 +87,21 @@ export default function CollectionPage() {
 
     const gradient = GRADIENT_MAP[categorySlug] || GRADIENT_MAP["accessories"];
 
+    // Detect tech setup slugs
+    const isTechSetup = ["creator-studio", "gamer-squad"].includes(categorySlug);
+
     const fetchProducts = useCallback(async () => {
         setLoading(true);
         try {
             const [sortBy, sortOrder] = sort.split("-") as [string, "asc" | "desc"];
             const params = new URLSearchParams();
-            if (dbCategory) params.set("category", dbCategory);
+            if (isTechSetup) {
+                // Tech setup uses special keyword-based filtering
+                params.set("techSetup", categorySlug);
+            } else if (dbCategory) {
+                params.set("category", dbCategory);
+            }
+            if (subCategory) params.set("sub", subCategory);
             if (search) params.set("search", search);
             if (brandParam) params.set("brand", brandParam);
             params.set("limit", String(PAGE_SIZE));
@@ -103,7 +126,7 @@ export default function CollectionPage() {
         } finally {
             setLoading(false);
         }
-    }, [dbCategory, categorySlug, subCategory, search, brandParam, page, sort, priceRange]);
+    }, [dbCategory, categorySlug, subCategory, search, brandParam, page, sort, priceRange, isTechSetup]);
 
     useEffect(() => {
         fetchProducts();

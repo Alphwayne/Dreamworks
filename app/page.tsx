@@ -29,11 +29,11 @@ const BLOG_PREVIEWS = [
     title: "The 2026 World Cup Is Becoming a Tech Showcase",
     excerpt: "Football meets technology in the most spectacular way yet.",
     category: "World Cup",
-    categoryColor: "bg-green-500",
+    categoryColor: "bg-blue-500",
     date: "Jun 13, 2026",
     readTime: 5,
     likes: 47,
-    bg: "from-green-800 to-emerald-900",
+    bg: "from-blue-800 to-indigo-900",
     emoji: "⚽",
   },
   {
@@ -53,11 +53,11 @@ const BLOG_PREVIEWS = [
     title: "Buy One, Get One Free! Best Tech Deals Right Now",
     excerpt: "The best deals give you more for your money.",
     category: "Deals",
-    categoryColor: "bg-orange-500",
+    categoryColor: "bg-indigo-500",
     date: "Jun 23, 2026",
     readTime: 2,
     likes: 63,
-    bg: "from-orange-700 to-red-800",
+    bg: "from-indigo-700 to-blue-900",
     emoji: "🎁",
   },
 ];
@@ -71,12 +71,12 @@ const SOCIAL_LINKS = [
 ];
 
 const SELLING_POINTS = [
-  { icon: "🏆", label: "22 Years of Expertise", sub: "Trusted since 2004", color: "from-yellow-500 to-orange-500" },
-  { icon: "🌍", label: "Curated Global Brands", sub: "Apple · Samsung · Dell · HP · Sony", color: "from-blue-500 to-blue-700" },
-  { icon: "📍", label: "Nationwide Presence", sub: "Lagos · Abuja · Port Harcourt", color: "from-emerald-500 to-teal-600" },
-  { icon: "💳", label: "Pay Small Small", sub: "Own premium tech affordably", color: "from-purple-500 to-purple-700" },
-  { icon: "🎧", label: "24/7 Expert Support", sub: "Chat · Phone · Email", color: "from-pink-500 to-rose-600" },
-  { icon: "🔒", label: "Authentic. Guaranteed.", sub: "Every product verified", color: "from-indigo-500 to-indigo-700" },
+  { icon: "🏆", label: "22 Years of Expertise", sub: "Trusted since 2004", color: "from-blue-500 to-blue-700" },
+  { icon: "🌍", label: "Curated Global Brands", sub: "Apple · Samsung · Dell · HP · Sony", color: "from-blue-600 to-indigo-700" },
+  { icon: "📍", label: "Nationwide Presence", sub: "Lagos · Abuja · Port Harcourt", color: "from-indigo-500 to-blue-700" },
+  { icon: "💳", label: "Pay Small Small", sub: "Own premium tech affordably", color: "from-blue-700 to-indigo-800" },
+  { icon: "🎧", label: "24/7 Expert Support", sub: "Chat · Phone · Email", color: "from-sky-500 to-blue-700" },
+  { icon: "🔒", label: "Authentic. Guaranteed.", sub: "Every product verified", color: "from-indigo-600 to-blue-800" },
 ];
 
 // Fetch products with compare_price (deals)
@@ -161,19 +161,22 @@ async function getBundles() {
   return bundles.filter((b) => b.products.length >= 3);
 }
 
-// Category data for the visual category strip
-const CATEGORY_STRIP_DATA = [
-  { label: "Computing", slug: "computing-printing", image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&q=75" },
-  { label: "Mobile & Tablet", slug: "mobile-tablet", image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&q=75" },
-  { label: "Electronics", slug: "electronics", image: "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=300&q=75" },
-  { label: "Enterprise", slug: "enterprise", image: "https://images.unsplash.com/photo-1558002038-1055907df827?w=300&q=75" },
-  { label: "Apple", slug: "apple", image: "https://images.unsplash.com/photo-1491933382434-500287f9b54b?w=300&q=75" },
-  { label: "Power & UPS", slug: "power", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=75" },
-  { label: "Accessories", slug: "accessories", image: "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=300&q=75" },
-  { label: "Print & Supplies", slug: "print-supplies", image: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=300&q=75" },
-  { label: "HP Brand", slug: "hp-brand", image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&q=75" },
-  { label: "Open Box", slug: "open-box", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=75" },
-];
+// Fetch catchy featured products for the visual strip
+async function getCatchyProducts() {
+  const { data } = await supabase
+    .from("products")
+    .select("id, product_name, selling_price, image_url, slug, category")
+    .eq("is_active", true)
+    .not("image_url", "is", null)
+    .order("selling_price", { ascending: false })
+    .limit(12);
+  return (data || []).map((p) => ({
+    label: p.product_name.length > 28 ? p.product_name.slice(0, 28) + "..." : p.product_name,
+    slug: p.slug || p.id,
+    image: p.image_url || "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&q=75",
+    isProduct: true,
+  }));
+}
 
 async function getMixedProducts() {
   const categories = [
@@ -215,6 +218,7 @@ export default async function Home() {
     trendingProducts,
     justLaunched,
     bundles,
+    catchyProducts,
   ] = await Promise.all([
     getProducts({ limit: 8, sortBy: "created_at", sortOrder: "desc" }),
     getMixedProducts(),
@@ -223,6 +227,7 @@ export default async function Home() {
     getTrendingProducts(),
     getJustLaunched(),
     getBundles(),
+    getCatchyProducts(),
   ]);
 
   return (
@@ -238,9 +243,9 @@ export default async function Home() {
 
         <div className="h-8 md:h-12" />
 
-        {/* === CATEGORY STRIP === */}
-        <div className="px-4 max-w-7xl mx-auto mb-8">
-          <CategoryStrip categories={CATEGORY_STRIP_DATA} />
+        {/* === FEATURED PRODUCTS STRIP === */}
+        <div className="px-4 md:px-6 mb-8">
+          <CategoryStrip categories={catchyProducts} />
         </div>
 
         {/* === NEW: JUST LAUNCHED BENTO GRID === */}

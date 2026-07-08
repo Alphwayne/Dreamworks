@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { Search } from "lucide-react";
 import { formatPrice } from "@/lib/types";
 
@@ -11,8 +10,18 @@ export default function AdminCustomersPage() {
     const [search, setSearch] = useState("");
 
     useEffect(() => {
-        supabase.from("customers").select("*").order("created_at", { ascending: false }).limit(200)
-            .then(({ data }) => { setCustomers(data || []); setLoading(false); });
+        async function loadCustomers() {
+            try {
+                const res = await fetch("/api/admin/customers");
+                const json = await res.json();
+                setCustomers(json.customers || []);
+            } catch (err) {
+                console.error("[Customers] Load error:", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadCustomers();
     }, []);
 
     const filtered = customers.filter((c) =>

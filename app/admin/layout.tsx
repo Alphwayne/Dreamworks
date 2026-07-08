@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import Image from "next/image";
 import {
     LayoutDashboard, Package, ShoppingCart, Users, BarChart3,
     FileText, Code2, UserCog, LogOut, ChevronLeft,
@@ -139,9 +140,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <div className={`h-[72px] flex items-center ${sidebarOpen ? "justify-between px-5" : "justify-center"} border-b border-white/[0.06]`}>
                     {sidebarOpen && (
                         <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                                <Zap size={16} className="text-white" />
-                            </div>
+                            <Image src="/Dw_web_Logo.avif" alt="DreamWorks" width={36} height={36} className="rounded-xl shadow-lg shadow-blue-500/20" />
                             <div>
                                 <span className="font-bold text-white text-sm tracking-tight block leading-tight">DreamWorks</span>
                                 <span className="text-[10px] text-blue-300/40 font-medium">Admin Panel</span>
@@ -222,8 +221,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <Menu size={18} className="text-white/60" />
                 </button>
                 <div className="flex items-center gap-2">
-                    <Zap size={16} className="text-blue-400" />
-                    <span className="font-bold text-white text-sm">DW Admin</span>
+                    <Image src="/Dw_web_Logo.avif" alt="DreamWorks" width={28} height={28} className="rounded-lg" />
+                    <span className="font-bold text-white text-sm">DreamWorks</span>
                 </div>
                 <button onClick={handleSignOut} className="w-9 h-9 rounded-lg bg-white/[0.06] flex items-center justify-center">
                     <LogOut size={16} className="text-white/40" />
@@ -238,10 +237,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         style={{ background: "linear-gradient(180deg, #0d1b3e 0%, #0a1628 50%, #060b14 100%)" }}>
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                                    <Zap size={14} className="text-white" />
-                                </div>
-                                <span className="font-bold text-white text-sm">DW Admin</span>
+                                <Image src="/Dw_web_Logo.avif" alt="DreamWorks" width={32} height={32} className="rounded-xl" />
+                                <span className="font-bold text-white text-sm">DreamWorks</span>
                             </div>
                             <button onClick={() => setMobileMenuOpen(false)} className="w-8 h-8 rounded-lg hover:bg-white/[0.06] flex items-center justify-center">
                                 <X size={18} className="text-white/40" />

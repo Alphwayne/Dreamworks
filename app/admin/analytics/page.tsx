@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { formatPrice } from "@/lib/types";
 import {
     TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Package,
@@ -30,94 +29,53 @@ export default function AnalyticsPage() {
 
     async function loadAnalytics() {
         setLoading(true);
-        const now = new Date();
-        let startDate: string | null = null;
+        try {
+            const periodMap: Record<string, string> = { "7d": "week", "30d": "month", "90d": "all", "all": "all" };
+            const res = await fetch(`/api/admin/analytics?period=${periodMap[period] || "all"}`);
+            const json = await res.json();
 
-        if (period === "7d") startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-        else if (period === "30d") startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        else if (period === "90d") startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString();
+            // Transform API response to match existing UI data shape
+            const revenueByMonth = json.revenueByMonth || {};
+            const dailyRevenue = Object.entries(revenueByMonth).map(([date, d]: [string, any]) => ({
+                date,
+                revenue: d.revenue || 0,
+                orders: d.orders || 0,
+            }));
 
-        let ordersQuery = supabase.from("orders").select("*");
-        if (startDate) ordersQuery = ordersQuery.gte("created_at", startDate);
-        const { data: orders } = await ordersQuery;
+            const categoryBreakdown = Object.entries(json.categoryBreakdown || {}).map(([category, d]: [string, any]) => ({
+                category,
+                count: d.count || 0,
+                revenue: d.revenue || 0,
+            })).sort((a, b) => b.revenue - a.revenue).slice(0, 8);
 
-        const allOrders = orders || [];
+            const topCustomers = (json.topCustomers || []).map((c: any) => ({
+                email: c.email,
+                name: `${c.first_name || ""} ${c.last_name || ""}`.trim(),
+                total_spent: c.total_spent || 0,
+                total_orders: c.total_orders || 0,
+            }));
 
-        // Daily revenue
-        const dailyMap: Record<string, { revenue: number; orders: number }> = {};
-        allOrders.forEach((o) => {
-            const day = new Date(o.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-            if (!dailyMap[day]) dailyMap[day] = { revenue: 0, orders: 0 };
-            dailyMap[day].revenue += Number(o.total);
-            dailyMap[day].orders += 1;
-        });
-        const dailyRevenue = Object.entries(dailyMap).map(([date, d]) => ({ date, ...d })).slice(-14);
+            const fulfillmentBreakdown = json.fulfillmentBreakdown || {};
+            const fulfillmentStats = Object.entries(fulfillmentBreakdown).map(([status, count]) => ({ status, count: count as number }));
 
-        // Category breakdown from order items
-        const { data: orderItems } = await supabase.from("order_items").select("lineitem_name, lineitem_price, lineitem_quantity");
-        const catMap: Record<string, { count: number; revenue: number }> = {};
-        (orderItems || []).forEach((item) => {
-            const cat = item.lineitem_name?.split(" ")[0] || "Other";
-            if (!catMap[cat]) catMap[cat] = { count: 0, revenue: 0 };
-            catMap[cat].count += item.lineitem_quantity;
-            catMap[cat].revenue += item.lineitem_price * item.lineitem_quantity;
-        });
-        const categoryBreakdown = Object.entries(catMap)
-            .map(([category, d]) => ({ category, ...d }))
-            .sort((a, b) => b.revenue - a.revenue)
-            .slice(0, 8);
+            const ordersByStatus = json.ordersByStatus || {};
+            const paymentMethods = Object.entries(ordersByStatus).map(([method, count]) => ({ method, count: count as number }));
 
-        // Top customers
-        const { data: topCust } = await supabase
-            .from("customers")
-            .select("email, first_name, last_name, total_spent, total_orders")
-            .order("total_spent", { ascending: false })
-            .limit(5);
-        const topCustomers = (topCust || []).map((c) => ({
-            email: c.email,
-            name: `${c.first_name} ${c.last_name}`.trim(),
-            total_spent: c.total_spent,
-            total_orders: c.total_orders,
-        }));
-
-        // Payment methods
-        const pmMap: Record<string, number> = {};
-        allOrders.forEach((o) => {
-            const method = o.payment_method || "Unknown";
-            pmMap[method] = (pmMap[method] || 0) + 1;
-        });
-        const paymentMethods = Object.entries(pmMap).map(([method, count]) => ({ method, count })).sort((a, b) => b.count - a.count);
-
-        // Fulfillment stats
-        const fMap: Record<string, number> = {};
-        allOrders.forEach((o) => {
-            const status = o.fulfillment_status || "unfulfilled";
-            fMap[status] = (fMap[status] || 0) + 1;
-        });
-        const fulfillmentStats = Object.entries(fMap).map(([status, count]) => ({ status, count }));
-
-        // Computed metrics
-        const totalRev = allOrders.reduce((s, o) => s + Number(o.total), 0);
-        const avgOrderValue = allOrders.length > 0 ? totalRev / allOrders.length : 0;
-
-        // Repeat customer rate
-        const emailCounts: Record<string, number> = {};
-        allOrders.forEach((o) => { emailCounts[o.email] = (emailCounts[o.email] || 0) + 1; });
-        const totalUniqueCustomers = Object.keys(emailCounts).length;
-        const repeatCustomers = Object.values(emailCounts).filter((c) => c > 1).length;
-        const repeatCustomerRate = totalUniqueCustomers > 0 ? (repeatCustomers / totalUniqueCustomers) * 100 : 0;
-
-        setData({
-            dailyRevenue,
-            categoryBreakdown,
-            topCustomers,
-            paymentMethods,
-            fulfillmentStats,
-            monthlyGrowth: 12.5,
-            avgOrderValue,
-            repeatCustomerRate,
-        });
-        setLoading(false);
+            setData({
+                dailyRevenue,
+                categoryBreakdown,
+                topCustomers,
+                paymentMethods,
+                fulfillmentStats,
+                monthlyGrowth: json.monthlyGrowth || 0,
+                avgOrderValue: json.avgOrderValue || 0,
+                repeatCustomerRate: 0,
+            });
+        } catch (err) {
+            console.error("[Analytics] Load error:", err);
+        } finally {
+            setLoading(false);
+        }
     }
 
     if (loading) {

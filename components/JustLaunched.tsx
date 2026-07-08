@@ -27,7 +27,7 @@ export function JustLaunched({ products }: { products: NewProduct[] }) {
         <section className="py-10 px-4 max-w-7xl mx-auto">
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 animate-bounce" style={{ animationDuration: "3s" }}>
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 animate-bounce" style={{ animationDuration: "3s" }}>
                     <Rocket size={20} className="text-white" />
                 </div>
                 <div>
@@ -40,10 +40,10 @@ export function JustLaunched({ products }: { products: NewProduct[] }) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Hero product - large card */}
                 <Link href={`/products/${hero.slug}`} className="lg:col-span-2 lg:row-span-2 group">
-                    <div className="relative h-full min-h-[360px] bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-3xl border border-gray-100 overflow-hidden hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-500">
+                    <div className="relative h-full min-h-[360px] bg-gradient-to-br from-blue-50 via-indigo-50 to-sky-50 rounded-3xl border border-gray-100 overflow-hidden hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
                         {/* Badge */}
                         <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
-                            <span className="bg-emerald-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg shadow-emerald-500/30">
+                            <span className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg shadow-blue-500/30">
                                 <Sparkles size={10} /> NEW
                             </span>
                             <span className="bg-white/80 backdrop-blur-sm text-gray-600 text-[10px] font-semibold px-2.5 py-1.5 rounded-full">
@@ -65,8 +65,8 @@ export function JustLaunched({ products }: { products: NewProduct[] }) {
 
                         {/* Bottom info overlay */}
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/95 to-transparent p-6 pt-16">
-                            <p className="text-xs text-emerald-600 font-bold uppercase tracking-widest mb-1">{hero.category}</p>
-                            <h3 className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-emerald-700 transition-colors mb-2">
+                            <p className="text-xs text-blue-600 font-bold uppercase tracking-widest mb-1">{hero.category}</p>
+                            <h3 className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors mb-2">
                                 {hero.product_name}
                             </h3>
                             <div className="flex items-center justify-between">
@@ -76,7 +76,7 @@ export function JustLaunched({ products }: { products: NewProduct[] }) {
                                         <span className="text-sm text-gray-400 line-through">{formatPrice(hero.compare_price)}</span>
                                     )}
                                 </div>
-                                <span className="flex items-center gap-1 text-emerald-600 text-sm font-semibold group-hover:translate-x-1 transition-transform">
+                                <span className="flex items-center gap-1 text-blue-600 text-sm font-semibold group-hover:translate-x-1 transition-transform">
                                     Shop now <ArrowRight size={14} />
                                 </span>
                             </div>
@@ -96,7 +96,7 @@ export function JustLaunched({ products }: { products: NewProduct[] }) {
                                     fill
                                     className="object-contain p-3 group-hover:scale-110 transition-transform duration-500"
                                 />
-                                <span className="absolute top-2 left-2 bg-emerald-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-md">
+                                <span className="absolute top-2 left-2 bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-md">
                                     NEW
                                 </span>
                             </div>

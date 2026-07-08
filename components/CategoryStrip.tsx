@@ -9,6 +9,7 @@ interface CategoryItem {
     slug: string;
     image: string;
     count?: number;
+    isProduct?: boolean;
 }
 
 interface CategoryStripProps {
@@ -19,7 +20,7 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const [isPaused, setIsPaused] = useState(false);
     const animationRef = useRef<number>(0);
-    const scrollSpeed = 0.6;
+    const scrollSpeed = 0.5;
 
     useEffect(() => {
         const container = scrollRef.current;
@@ -44,50 +45,48 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
     const displayCategories = [...categories, ...categories];
 
     return (
-        <section className="relative py-8 bg-gradient-to-b from-gray-50/50 to-white">
+        <section className="relative w-full">
             <div
-                className="relative overflow-hidden"
+                className="relative overflow-hidden rounded-2xl"
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
             >
-                {/* Minimal fade edges - much less visible */}
-                <div className="absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-white/60 to-transparent z-10 pointer-events-none" />
-                <div className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-white/60 to-transparent z-10 pointer-events-none" />
+                {/* Very subtle fade edges */}
+                <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-white/40 to-transparent z-10 pointer-events-none" />
+                <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white/40 to-transparent z-10 pointer-events-none" />
 
-                {/* Scrolling row - wider items, more gap */}
+                {/* Scrolling row */}
                 <div
                     ref={scrollRef}
-                    className="flex gap-5 overflow-x-hidden px-2"
+                    className="flex gap-3 overflow-x-hidden"
                     style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                 >
                     {displayCategories.map((cat, idx) => (
                         <Link
                             key={`${cat.slug}-${idx}`}
-                            href={`/collections/${cat.slug}`}
+                            href={cat.isProduct ? `/products/${cat.slug}` : `/collections/${cat.slug}`}
                             className="flex-shrink-0 group/card"
                         >
-                            <div className="relative w-[220px] md:w-[260px] lg:w-[280px] h-[140px] md:h-[160px] lg:h-[170px] rounded-2xl overflow-hidden bg-gray-100 shadow-md group-hover/card:shadow-2xl group-hover/card:shadow-blue-500/15 transition-all duration-500 group-hover/card:-translate-y-1.5 border border-white/20">
+                            <div className="relative w-[200px] sm:w-[240px] md:w-[280px] lg:w-[320px] h-[130px] sm:h-[150px] md:h-[170px] rounded-xl overflow-hidden bg-gray-100 shadow-sm group-hover/card:shadow-xl transition-all duration-500 group-hover/card:-translate-y-1">
                                 {/* Background image */}
                                 <Image
                                     src={cat.image}
                                     alt={cat.label}
                                     fill
-                                    className="object-cover group-hover/card:scale-110 transition-transform duration-700"
-                                    sizes="280px"
-                                    quality={100}
+                                    className="object-cover group-hover/card:scale-105 transition-transform duration-700"
+                                    sizes="320px"
+                                    quality={85}
                                 />
-                                {/* Gradient overlay */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-                                {/* Top accent line */}
-                                <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
-                                {/* Label - more prominent */}
-                                <div className="absolute bottom-0 left-0 right-0 p-4">
-                                    <p className="text-white font-bold text-base md:text-lg tracking-tight drop-shadow-lg">
+                                {/* Dark gradient at bottom only */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                                {/* Label at bottom - clean and minimal */}
+                                <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
+                                    <p className="text-white font-bold text-sm md:text-base tracking-tight drop-shadow-md leading-tight">
                                         {cat.label}
                                     </p>
-                                    <p className="text-white/50 text-[11px] font-medium mt-1 group-hover/card:text-blue-300 transition-colors">
-                                        Shop now →
-                                    </p>
+                                    {cat.isProduct && (
+                                        <p className="text-white/70 text-[11px] mt-0.5 font-medium">Shop now &rarr;</p>
+                                    )}
                                 </div>
                             </div>
                         </Link>

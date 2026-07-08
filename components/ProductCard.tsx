@@ -11,21 +11,21 @@ interface ProductCardProps {
     product: Product;
 }
 
-// Map category to a brand accent color
+// Brand-consistent color palette - all blue/indigo mixes
 const CATEGORY_COLORS: Record<string, { dot: string; badge: string; text: string }> = {
     "COMPUTING ACCESSORIES": { dot: "bg-blue-600", badge: "bg-blue-50 text-blue-700 border-blue-100", text: "text-blue-700" },
-    "MOBILE & TABLET": { dot: "bg-purple-600", badge: "bg-purple-50 text-purple-700 border-purple-100", text: "text-purple-700" },
-    "ENTERPRISE": { dot: "bg-indigo-600", badge: "bg-indigo-50 text-indigo-700 border-indigo-100", text: "text-indigo-700" },
+    "MOBILE & TABLET": { dot: "bg-indigo-600", badge: "bg-indigo-50 text-indigo-700 border-indigo-100", text: "text-indigo-700" },
+    "ENTERPRISE": { dot: "bg-blue-700", badge: "bg-blue-50 text-blue-800 border-blue-100", text: "text-blue-800" },
     "ACCESSORIES": { dot: "bg-slate-600", badge: "bg-slate-50 text-slate-700 border-slate-100", text: "text-slate-700" },
-    "POWER": { dot: "bg-orange-500", badge: "bg-orange-50 text-orange-700 border-orange-100", text: "text-orange-700" },
-    "CONSUMER ELECTRONICS": { dot: "bg-teal-600", badge: "bg-teal-50 text-teal-700 border-teal-100", text: "text-teal-700" },
+    "POWER": { dot: "bg-blue-500", badge: "bg-sky-50 text-sky-700 border-sky-100", text: "text-sky-700" },
+    "CONSUMER ELECTRONICS": { dot: "bg-indigo-500", badge: "bg-indigo-50 text-indigo-700 border-indigo-100", text: "text-indigo-700" },
     "APPLE": { dot: "bg-gray-800", badge: "bg-gray-50 text-gray-800 border-gray-200", text: "text-gray-800" },
     "HP BRAND": { dot: "bg-blue-700", badge: "bg-blue-50 text-blue-800 border-blue-100", text: "text-blue-800" },
-    "PRINT & SUPPLIES": { dot: "bg-emerald-600", badge: "bg-emerald-50 text-emerald-700 border-emerald-100", text: "text-emerald-700" },
-    "FACTORY RECERTIFIED": { dot: "bg-amber-600", badge: "bg-amber-50 text-amber-700 border-amber-100", text: "text-amber-700" },
-    "OPEN BOX": { dot: "bg-cyan-600", badge: "bg-cyan-50 text-cyan-700 border-cyan-100", text: "text-cyan-700" },
+    "PRINT & SUPPLIES": { dot: "bg-sky-600", badge: "bg-sky-50 text-sky-700 border-sky-100", text: "text-sky-700" },
+    "FACTORY RECERTIFIED": { dot: "bg-blue-500", badge: "bg-blue-50 text-blue-600 border-blue-100", text: "text-blue-600" },
+    "OPEN BOX": { dot: "bg-indigo-500", badge: "bg-indigo-50 text-indigo-600 border-indigo-100", text: "text-indigo-600" },
     "OTHER BRAND": { dot: "bg-gray-500", badge: "bg-gray-50 text-gray-600 border-gray-100", text: "text-gray-600" },
-    "USED": { dot: "bg-rose-500", badge: "bg-rose-50 text-rose-700 border-rose-100", text: "text-rose-700" },
+    "USED": { dot: "bg-slate-500", badge: "bg-slate-50 text-slate-600 border-slate-100", text: "text-slate-600" },
 };
 
 export function ProductCard({ product }: ProductCardProps) {
@@ -63,7 +63,7 @@ export function ProductCard({ product }: ProductCardProps) {
                     {/* Top-left badge */}
                     <div className="absolute top-2.5 left-2.5">
                         {discount ? (
-                            <span className="bg-gradient-to-r from-red-500 to-rose-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md">
+                            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md">
                                 -{discount}%
                             </span>
                         ) : (
@@ -85,7 +85,7 @@ export function ProductCard({ product }: ProductCardProps) {
                         <button
                             onClick={handleAdd}
                             className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-xl font-semibold text-xs transition-all ${added
-                                ? "bg-emerald-500 text-white"
+                                ? "bg-blue-600 text-white"
                                 : "bg-white/95 backdrop-blur-sm text-gray-800 hover:bg-blue-700 hover:text-white border border-gray-200 hover:border-blue-700"
                                 }`}
                         >
@@ -124,7 +124,7 @@ export function ProductCard({ product }: ProductCardProps) {
                         {/* Mobile add to cart */}
                         <button
                             onClick={handleAdd}
-                            className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-xl font-semibold text-xs transition-all sm:hidden ${added ? "bg-emerald-500 text-white" : "bg-blue-700 text-white hover:bg-blue-800"
+                            className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-xl font-semibold text-xs transition-all sm:hidden ${added ? "bg-blue-600 text-white" : "bg-blue-700 text-white hover:bg-blue-800"
                                 }`}
                         >
                             <ShoppingCart size={12} />
