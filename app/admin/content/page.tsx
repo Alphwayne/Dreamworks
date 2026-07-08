@@ -258,6 +258,16 @@ export default function ContentManagerPage() {
         }
     }
 
+    function updateSectionItem(id: string, section: "featured" | "trending" | "launched", field: string, value: any) {
+        if (section === "featured") {
+            setFeaturedProducts(featuredProducts.map((p) => p.id === id ? { ...p, [field]: value } : p));
+        } else if (section === "trending") {
+            setTrendingProducts(trendingProducts.map((p) => p.id === id ? { ...p, [field]: value } : p));
+        } else {
+            setLaunchedProducts(launchedProducts.map((p) => p.id === id ? { ...p, [field]: value } : p));
+        }
+    }
+
     const tabs = [
         { id: "hero", label: "Hero Slides", icon: Image },
         { id: "featured", label: "Featured Strip", icon: Layout },
@@ -317,29 +327,81 @@ export default function ContentManagerPage() {
                         </div>
                     )}
 
-                    {/* Current items */}
-                    <div className="space-y-2">
+                    {/* Current items - with inline editing */}
+                    <div className="space-y-3">
                         {items.length === 0 ? (
                             <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
                                 <p className="text-sm text-gray-400">No products added yet. Search and add products above.</p>
                             </div>
                         ) : (
                             items.map((item, index) => (
-                                <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-blue-50/50 transition-colors group">
-                                    <div className="flex items-center gap-3">
-                                        <GripVertical size={14} className="text-gray-300 cursor-grab" />
-                                        <span className="text-xs font-bold text-gray-400 w-5">{index + 1}</span>
-                                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200">
-                                            <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                                <div key={item.id} className="bg-gray-50 rounded-xl p-4 hover:bg-blue-50/30 transition-colors border border-gray-100">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <GripVertical size={14} className="text-gray-300 cursor-grab" />
+                                            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">#{index + 1}</span>
+                                            {'is_active' in item && (
+                                                <button
+                                                    onClick={() => updateSectionItem(item.id, section, 'is_active', !(item as FeaturedProduct).is_active)}
+                                                    className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full transition-colors ${(item as FeaturedProduct).is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-500'}`}
+                                                >
+                                                    {(item as FeaturedProduct).is_active ? <Eye size={10} /> : <EyeOff size={10} />}
+                                                    {(item as FeaturedProduct).is_active ? 'Live' : 'Hidden'}
+                                                </button>
+                                            )}
                                         </div>
-                                        <span className="text-sm font-medium text-gray-800 line-clamp-1">{item.product_name}</span>
+                                        <button
+                                            onClick={() => removeFromSection(item.id, section)}
+                                            className="text-red-400 hover:text-red-600 transition-colors p-1 rounded-lg hover:bg-red-50"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
                                     </div>
-                                    <button
-                                        onClick={() => removeFromSection(item.id, section)}
-                                        className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all"
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
+                                    <div className="flex gap-4">
+                                        {/* Image preview + URL edit */}
+                                        <div className="flex-shrink-0">
+                                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-200 mb-1.5">
+                                                <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                                            </div>
+                                            <input
+                                                value={item.image_url}
+                                                onChange={(e) => updateSectionItem(item.id, section, 'image_url', e.target.value)}
+                                                placeholder="Image URL"
+                                                className="w-16 text-[10px] text-gray-400 border-0 bg-transparent p-0 focus:outline-none truncate"
+                                                title={item.image_url}
+                                            />
+                                        </div>
+                                        {/* Editable fields */}
+                                        <div className="flex-1 space-y-2">
+                                            <div>
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase">Product Name</label>
+                                                <input
+                                                    value={item.product_name}
+                                                    onChange={(e) => updateSectionItem(item.id, section, 'product_name', e.target.value)}
+                                                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Slug</label>
+                                                    <input
+                                                        value={item.slug}
+                                                        onChange={(e) => updateSectionItem(item.id, section, 'slug', e.target.value)}
+                                                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Price (₦)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={item.selling_price}
+                                                        onChange={(e) => updateSectionItem(item.id, section, 'selling_price', Number(e.target.value))}
+                                                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             ))
                         )}
