@@ -1,21 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Header } from "@/components/Header";
-
 import { CartDrawer } from "@/components/CartDrawer";
-import { Heart, Share2, MessageCircle, Clock, ChevronLeft, Send, User } from "lucide-react";
+import { Heart, Share2, MessageCircle, Clock, ChevronLeft, Send, User, ThumbsUp } from "lucide-react";
 
 interface Comment {
-    id: number;
+    id: string;
+    post_slug: string;
     name: string;
     content: string;
-    timestamp: string;
+    created_at: string;
     likes: number;
+    is_anonymous: boolean;
+    parent_id: string | null;
     replies: Comment[];
-    isAnonymous: boolean;
 }
 
 const PLACEHOLDER_CONTENT = `
@@ -40,37 +41,67 @@ What started as a small technology shop in Lagos has grown into Nigeria's premie
 We're constantly expanding our catalogue, improving our delivery network, and building new ways for customers to engage with us. The future of tech retail in Nigeria is digital, fast, and customer-first — and Dreamworks Direct is leading the charge.
 `;
 
+// Generate a persistent visitor ID for like tracking
+function getVisitorId(): string {
+    if (typeof window === "undefined") return "";
+    let id = localStorage.getItem("dw_visitor_id");
+    if (!id) {
+        id = "v_" + Math.random().toString(36).substr(2, 16) + Date.now().toString(36);
+        localStorage.setItem("dw_visitor_id", id);
+    }
+    return id;
+}
+
 export default function BlogPostPage() {
     const params = useParams();
     const slug = params.slug as string;
 
     const [liked, setLiked] = useState(false);
-    const [likes, setLikes] = useState(47);
-    const [comments, setComments] = useState<Comment[]>([
-        {
-            id: 1,
-            name: "Chukwuemeka A.",
-            content: "This is exactly what Nigeria needs. Dreamworks has been my go-to for years!",
-            timestamp: "2 days ago",
-            likes: 12,
-            replies: [],
-            isAnonymous: false,
-        },
-        {
-            id: 2,
-            name: "Anonymous",
-            content: "Great article! Would love to see more content like this.",
-            timestamp: "1 day ago",
-            likes: 8,
-            replies: [],
-            isAnonymous: true,
-        },
-    ]);
+    const [likes, setLikes] = useState(0);
+    const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState("");
     const [commentName, setCommentName] = useState("");
     const [isAnonymous, setIsAnonymous] = useState(false);
-    const [replyingTo, setReplyingTo] = useState<number | null>(null);
+    const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [replyText, setReplyText] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
+
+    // Load comments from API
+    const loadComments = useCallback(async () => {
+        try {
+            const res = await fetch(`/api/blog/comments?slug=${slug}`);
+            const data = await res.json();
+            if (data.comments) setComments(data.comments);
+        } catch (err) {
+            console.error("Failed to load comments:", err);
+        }
+    }, [slug]);
+
+    // Load post likes from API
+    const loadLikes = useCallback(async () => {
+        try {
+            const res = await fetch(`/api/blog/likes?slug=${slug}`);
+            const data = await res.json();
+            if (typeof data.likes === "number") setLikes(data.likes);
+        } catch (err) {
+            console.error("Failed to load likes:", err);
+        }
+    }, [slug]);
+
+    // Check if user already liked this post
+    useEffect(() => {
+        const likedPosts = JSON.parse(localStorage.getItem("dw_liked_posts") || "[]");
+        if (likedPosts.includes(slug)) setLiked(true);
+
+        const likedCmts = JSON.parse(localStorage.getItem("dw_liked_comments") || "[]");
+        setLikedComments(new Set(likedCmts));
+    }, [slug]);
+
+    useEffect(() => {
+        loadComments();
+        loadLikes();
+    }, [loadComments, loadLikes]);
 
     const handleShare = () => {
         if (navigator.share) {
@@ -81,48 +112,136 @@ export default function BlogPostPage() {
         }
     };
 
-    const submitComment = () => {
-        if (!newComment.trim()) return;
-        const comment: Comment = {
-            id: Date.now(),
-            name: isAnonymous ? "Anonymous" : commentName || "Guest",
-            content: newComment,
-            timestamp: "Just now",
-            likes: 0,
-            replies: [],
-            isAnonymous,
-        };
-        setComments([...comments, comment]);
-        setNewComment("");
-        setCommentName("");
-    };
+    // Toggle post like
+    const toggleLike = async () => {
+        const visitorId = getVisitorId();
+        try {
+            const res = await fetch("/api/blog/likes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ post_slug: slug, visitor_id: visitorId }),
+            });
+            const data = await res.json();
 
-    const submitReply = (commentId: number) => {
-        if (!replyText.trim()) return;
-        setComments(comments.map((c) => {
-            if (c.id === commentId) {
-                return {
-                    ...c,
-                    replies: [...c.replies, {
-                        id: Date.now(),
-                        name: isAnonymous ? "Anonymous" : "Guest",
-                        content: replyText,
-                        timestamp: "Just now",
-                        likes: 0,
-                        replies: [],
-                        isAnonymous,
-                    }],
-                };
+            if (data.action === "liked") {
+                setLiked(true);
+                setLikes((prev) => prev + 1);
+                const likedPosts = JSON.parse(localStorage.getItem("dw_liked_posts") || "[]");
+                localStorage.setItem("dw_liked_posts", JSON.stringify([...likedPosts, slug]));
+            } else {
+                setLiked(false);
+                setLikes((prev) => Math.max(0, prev - 1));
+                const likedPosts = JSON.parse(localStorage.getItem("dw_liked_posts") || "[]");
+                localStorage.setItem("dw_liked_posts", JSON.stringify(likedPosts.filter((s: string) => s !== slug)));
             }
-            return c;
-        }));
-        setReplyText("");
-        setReplyingTo(null);
+        } catch (err) {
+            console.error("Failed to toggle like:", err);
+        }
     };
 
-    const likeComment = (id: number) => {
-        setComments(comments.map((c) => c.id === id ? { ...c, likes: c.likes + 1 } : c));
+    // Toggle comment like
+    const toggleCommentLike = async (commentId: string) => {
+        const visitorId = getVisitorId();
+        try {
+            const res = await fetch("/api/blog/likes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ comment_id: commentId, visitor_id: visitorId }),
+            });
+            const data = await res.json();
+
+            const newLikedComments = new Set(likedComments);
+            if (data.action === "liked") {
+                newLikedComments.add(commentId);
+            } else {
+                newLikedComments.delete(commentId);
+            }
+            setLikedComments(newLikedComments);
+            localStorage.setItem("dw_liked_comments", JSON.stringify([...newLikedComments]));
+
+            // Reload comments to get updated like counts
+            loadComments();
+        } catch (err) {
+            console.error("Failed to toggle comment like:", err);
+        }
     };
+
+    // Submit comment
+    const submitComment = async () => {
+        if (!newComment.trim() || submitting) return;
+        setSubmitting(true);
+
+        try {
+            const res = await fetch("/api/blog/comments", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    post_slug: slug,
+                    name: isAnonymous ? "Anonymous" : (commentName || "Guest"),
+                    content: newComment,
+                    is_anonymous: isAnonymous,
+                }),
+            });
+            const data = await res.json();
+            if (data.comment) {
+                setComments([{ ...data.comment, replies: [] }, ...comments]);
+                setNewComment("");
+                setCommentName("");
+            }
+        } catch (err) {
+            console.error("Failed to submit comment:", err);
+        }
+        setSubmitting(false);
+    };
+
+    // Submit reply
+    const submitReply = async (commentId: string) => {
+        if (!replyText.trim() || submitting) return;
+        setSubmitting(true);
+
+        try {
+            const res = await fetch("/api/blog/comments", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    post_slug: slug,
+                    name: isAnonymous ? "Anonymous" : "Guest",
+                    content: replyText,
+                    is_anonymous: isAnonymous,
+                    parent_id: commentId,
+                }),
+            });
+            const data = await res.json();
+            if (data.comment) {
+                setComments(comments.map((c) => {
+                    if (c.id === commentId) {
+                        return { ...c, replies: [...c.replies, data.comment] };
+                    }
+                    return c;
+                }));
+                setReplyText("");
+                setReplyingTo(null);
+            }
+        } catch (err) {
+            console.error("Failed to submit reply:", err);
+        }
+        setSubmitting(false);
+    };
+
+    function formatTimestamp(dateStr: string): string {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diff = now.getTime() - date.getTime();
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
+
+        if (minutes < 1) return "Just now";
+        if (minutes < 60) return `${minutes}m ago`;
+        if (hours < 24) return `${hours}h ago`;
+        if (days < 7) return `${days}d ago`;
+        return date.toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" });
+    }
 
     return (
         <>
@@ -149,7 +268,7 @@ export default function BlogPostPage() {
                                     Product News
                                 </span>
                                 <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight">
-                                    Why Dreamworks Is Nigeria's Trusted Technology Partner
+                                    Why Dreamworks Is Nigeria&apos;s Trusted Technology Partner
                                 </h1>
                             </div>
                         </div>
@@ -167,7 +286,7 @@ export default function BlogPostPage() {
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={() => { setLiked(!liked); setLikes(liked ? likes - 1 : likes + 1); }}
+                                    onClick={toggleLike}
                                     className={`flex items-center gap-1.5 text-sm px-4 py-2 rounded-full border transition-all ${liked ? "bg-red-50 border-red-200 text-red-500" : "border-gray-200 text-gray-500 hover:border-red-200 hover:text-red-400"}`}
                                 >
                                     <Heart size={14} fill={liked ? "currentColor" : "none"} /> {likes}
@@ -239,7 +358,7 @@ export default function BlogPostPage() {
                                 />
                                 <button
                                     onClick={submitComment}
-                                    disabled={!newComment.trim()}
+                                    disabled={!newComment.trim() || submitting}
                                     className="self-end w-12 h-12 rounded-xl bg-blue-700 text-white flex items-center justify-center hover:bg-blue-800 transition-colors disabled:opacity-50 flex-shrink-0"
                                 >
                                     <Send size={18} />
@@ -249,24 +368,27 @@ export default function BlogPostPage() {
 
                         {/* Comments list */}
                         <div className="space-y-5">
+                            {comments.length === 0 && (
+                                <p className="text-center text-gray-400 text-sm py-8">No comments yet. Be the first to share your thoughts!</p>
+                            )}
                             {comments.map((comment) => (
                                 <div key={comment.id} className="border-b border-gray-50 pb-5 last:border-0">
                                     <div className="flex items-start gap-3">
                                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                                            {comment.isAnonymous ? "?" : comment.name[0].toUpperCase()}
+                                            {comment.is_anonymous ? "?" : comment.name[0]?.toUpperCase() || "G"}
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <span className="font-semibold text-sm text-gray-900">{comment.name}</span>
-                                                <span className="text-xs text-gray-400">{comment.timestamp}</span>
+                                                <span className="text-xs text-gray-400">{formatTimestamp(comment.created_at)}</span>
                                             </div>
                                             <p className="text-sm text-gray-600 leading-relaxed mb-2">{comment.content}</p>
                                             <div className="flex items-center gap-3">
                                                 <button
-                                                    onClick={() => likeComment(comment.id)}
-                                                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-400 transition-colors"
+                                                    onClick={() => toggleCommentLike(comment.id)}
+                                                    className={`flex items-center gap-1 text-xs transition-colors ${likedComments.has(comment.id) ? "text-red-500" : "text-gray-400 hover:text-red-400"}`}
                                                 >
-                                                    <Heart size={12} /> {comment.likes}
+                                                    <Heart size={12} fill={likedComments.has(comment.id) ? "currentColor" : "none"} /> {comment.likes || 0}
                                                 </button>
                                                 <button
                                                     onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
@@ -288,7 +410,8 @@ export default function BlogPostPage() {
                                                     />
                                                     <button
                                                         onClick={() => submitReply(comment.id)}
-                                                        className="px-4 py-2 bg-blue-700 text-white rounded-xl text-sm font-semibold hover:bg-blue-800 transition-colors"
+                                                        disabled={submitting}
+                                                        className="px-4 py-2 bg-blue-700 text-white rounded-xl text-sm font-semibold hover:bg-blue-800 transition-colors disabled:opacity-50"
                                                     >
                                                         Post
                                                     </button>
@@ -296,16 +419,16 @@ export default function BlogPostPage() {
                                             )}
 
                                             {/* Nested replies */}
-                                            {comment.replies.length > 0 && (
+                                            {comment.replies && comment.replies.length > 0 && (
                                                 <div className="mt-4 ml-4 space-y-3 border-l-2 border-gray-100 pl-4">
                                                     {comment.replies.map((reply) => (
                                                         <div key={reply.id} className="flex items-start gap-2">
                                                             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                                                {reply.isAnonymous ? "?" : reply.name[0].toUpperCase()}
+                                                                {reply.is_anonymous ? "?" : reply.name[0]?.toUpperCase() || "G"}
                                                             </div>
                                                             <div>
                                                                 <span className="font-semibold text-xs text-gray-800">{reply.name}</span>
-                                                                <span className="text-xs text-gray-400 ml-2">{reply.timestamp}</span>
+                                                                <span className="text-xs text-gray-400 ml-2">{formatTimestamp(reply.created_at)}</span>
                                                                 <p className="text-sm text-gray-600 mt-0.5">{reply.content}</p>
                                                             </div>
                                                         </div>
@@ -319,8 +442,6 @@ export default function BlogPostPage() {
                         </div>
                     </div>
                 </div>
-
-                
             </div>
         </>
     );

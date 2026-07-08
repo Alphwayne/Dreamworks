@@ -50,35 +50,29 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
             >
-                {/* Scrolling row */}
                 <div
                     ref={scrollRef}
-                    className="flex gap-4 overflow-x-hidden"
+                    className="flex gap-5 overflow-x-hidden py-2"
                     style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                 >
                     {displayCategories.map((cat, idx) => (
                         <Link
                             key={`${cat.slug}-${idx}`}
                             href={cat.isProduct ? `/products/${cat.slug}` : `/collections/${cat.slug}`}
-                            className="flex-shrink-0 group/card"
+                            className="flex-shrink-0 group/card text-center"
                         >
-                            {/* The card IS the image - image fills edge to edge */}
-                            <div className="relative w-[160px] sm:w-[180px] md:w-[200px] h-[140px] sm:h-[155px] md:h-[170px] rounded-2xl overflow-hidden shadow-md group-hover/card:shadow-2xl group-hover/card:shadow-blue-500/15 transition-all duration-500 group-hover/card:-translate-y-1.5 group-hover/card:scale-[1.02]">
-                                {/* Image fills the entire card */}
+                            {/* Image card - image fills edge to edge */}
+                            <div className="relative w-[150px] sm:w-[170px] md:w-[190px] h-[130px] sm:h-[145px] md:h-[160px] rounded-2xl overflow-hidden shadow-md group-hover/card:shadow-xl group-hover/card:shadow-blue-500/10 transition-all duration-500 group-hover/card:-translate-y-1.5 group-hover/card:scale-[1.03] bg-gray-100">
                                 <img
                                     src={cat.image}
                                     alt={cat.label}
                                     className="absolute inset-0 w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-700"
                                 />
-                                {/* Dark gradient overlay at bottom for text */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                                {/* Product name at bottom */}
-                                <div className="absolute bottom-0 left-0 right-0 p-3">
-                                    <p className="text-white font-bold text-[11px] sm:text-xs leading-tight line-clamp-2 drop-shadow-lg">
-                                        {cat.label}
-                                    </p>
-                                </div>
                             </div>
+                            {/* Name OUTSIDE and BELOW the image */}
+                            <p className="mt-2.5 text-[11px] sm:text-xs font-semibold text-gray-700 group-hover/card:text-blue-600 transition-colors line-clamp-2 max-w-[150px] sm:max-w-[170px] md:max-w-[190px] mx-auto leading-tight">
+                                {cat.label}
+                            </p>
                         </Link>
                     ))}
                 </div>
