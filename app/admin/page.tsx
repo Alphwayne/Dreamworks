@@ -99,7 +99,7 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="space-y-7">
+        <div className="space-y-7 flex flex-col min-h-full">
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -189,9 +189,9 @@ export default function AdminDashboard() {
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
                 {/* Recent Orders */}
-                <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col">
+                <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col min-h-[350px]">
                     <div className="flex items-center justify-between mb-5">
                         <h2 className="font-bold text-gray-900 flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
                             View all <ChevronRight size={12} />
                         </Link>
                     </div>
-                    <div className="space-y-2.5 overflow-y-auto max-h-[400px] pr-1" style={{ scrollbarWidth: "thin" }}>
+                    <div className="space-y-2.5 overflow-y-auto flex-1 pr-1" style={{ scrollbarWidth: "thin" }}>
                         {stats.recentOrders.length === 0 ? (
                             <div className="text-center py-12">
                                 <ShoppingCart size={32} className="text-gray-200 mx-auto mb-3" />

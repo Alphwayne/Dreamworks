@@ -189,8 +189,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     })}
                 </nav>
 
-                {/* Sign out button at bottom */}
-                <div className="border-t border-white/[0.06] p-3">
+                {/* User info + Sign out at bottom */}
+                <div className="border-t border-white/[0.06] p-3 space-y-2">
+                    {sidebarOpen && (
+                        <div className="px-3 py-2">
+                            <p className="text-[11px] font-medium text-white/50 truncate">{email.split("@")[0]}</p>
+                            <p className="text-[9px] text-white/25 capitalize">{role}</p>
+                        </div>
+                    )}
                     <button
                         onClick={handleSignOut}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/30 hover:bg-red-500/10 hover:text-red-400 transition-all ${!sidebarOpen ? "justify-center" : ""}`}
