@@ -191,7 +191,7 @@ export default function AdminDashboard() {
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Recent Orders */}
-                <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col">
                     <div className="flex items-center justify-between mb-5">
                         <h2 className="font-bold text-gray-900 flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
                             View all <ChevronRight size={12} />
                         </Link>
                     </div>
-                    <div className="space-y-2.5">
+                    <div className="space-y-2.5 overflow-y-auto max-h-[400px] pr-1" style={{ scrollbarWidth: "thin" }}>
                         {stats.recentOrders.length === 0 ? (
                             <div className="text-center py-12">
                                 <ShoppingCart size={32} className="text-gray-200 mx-auto mb-3" />
@@ -235,7 +235,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Right Column */}
-                <div className="space-y-6">
+                <div className="space-y-6 overflow-y-auto max-h-[600px] lg:max-h-none" style={{ scrollbarWidth: "thin" }}>
                     {/* Top Products */}
                     <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
                         <h2 className="font-bold text-gray-900 mb-5 flex items-center gap-2.5">
@@ -244,7 +244,7 @@ export default function AdminDashboard() {
                             </div>
                             Top Products
                         </h2>
-                        <div className="space-y-3">
+                        <div className="space-y-3 overflow-y-auto max-h-[200px]" style={{ scrollbarWidth: "thin" }}>
                             {stats.topProducts.length === 0 ? (
                                 <div className="text-center py-8">
                                     <BarChart3 size={24} className="text-gray-200 mx-auto mb-2" />
@@ -275,7 +275,7 @@ export default function AdminDashboard() {
                                 </div>
                                 Low Stock Alert
                             </h2>
-                            <div className="space-y-2.5">
+                            <div className="space-y-2.5 overflow-y-auto max-h-[200px]" style={{ scrollbarWidth: "thin" }}>
                                 {stats.lowStock.map((item) => (
                                     <div key={item.sku} className="flex items-center justify-between p-3 bg-orange-50/50 rounded-xl border border-orange-100/50">
                                         <p className="text-xs font-medium text-gray-700 truncate flex-1">{item.sku || item.title}</p>

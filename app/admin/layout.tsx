@@ -118,27 +118,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     return (
         <div className="h-screen bg-[#f0f2f5] flex overflow-hidden">
-            {/* Sidebar - Desktop - FIXED, does not scroll with content */}
-            <aside className={`hidden lg:flex flex-col flex-shrink-0 h-screen sticky top-0 transition-all duration-300 relative ${sidebarOpen ? "w-[240px]" : "w-[72px]"}`}
+            {/* Sidebar - Desktop - FIXED height, does not scroll with content */}
+            <aside className={`hidden lg:flex flex-col flex-shrink-0 h-screen transition-all duration-300 relative ${sidebarOpen ? "w-[240px]" : "w-[72px]"}`}
                 style={{ background: "linear-gradient(180deg, #0d1b3e 0%, #0a1628 50%, #060b14 100%)" }}>
 
                 {/* Subtle side glow */}
                 <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-blue-500/20 via-transparent to-transparent" />
 
-                {/* Logo + Oracle badge area */}
-                <div className={`flex flex-col items-center pt-5 pb-4 border-b border-white/[0.06] ${sidebarOpen ? "px-5" : "px-2"}`}>
-                    <div className={`flex items-center ${sidebarOpen ? "w-full justify-between" : "justify-center"}`}>
-                        <div className={`flex items-center ${sidebarOpen ? "gap-3" : ""}`}>
-                            <Image src="/Dw_web_Logo.avif" alt="DreamWorks" width={sidebarOpen ? 40 : 34} height={sidebarOpen ? 40 : 34} className="rounded-xl shadow-lg shadow-blue-500/20" />
-                        </div>
-                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="w-7 h-7 rounded-lg hover:bg-white/[0.06] flex items-center justify-center transition-colors">
-                            <ChevronLeft size={14} className={`text-white/30 transition-transform duration-300 ${!sidebarOpen ? "rotate-180" : ""}`} />
-                        </button>
-                    </div>
+                {/* Logo area - CENTERED prominently */}
+                <div className={`flex flex-col items-center pt-6 pb-4 border-b border-white/[0.06] ${sidebarOpen ? "px-5" : "px-2"}`}>
+                    {/* Collapse toggle */}
                     {sidebarOpen && (
-                        <div className="w-full mt-3">
-                            <p className="text-[10px] text-blue-300/50 font-medium text-center">Admin Panel</p>
-                            <div className={`mt-2 px-3 py-1.5 rounded-lg text-[9px] font-bold text-center uppercase tracking-[0.15em] ${role === "oracle"
+                        <button onClick={() => setSidebarOpen(false)} className="absolute top-4 right-4 w-6 h-6 rounded-md hover:bg-white/[0.06] flex items-center justify-center transition-colors">
+                            <ChevronLeft size={12} className="text-white/30" />
+                        </button>
+                    )}
+                    {!sidebarOpen && (
+                        <button onClick={() => setSidebarOpen(true)} className="absolute top-4 right-3 w-6 h-6 rounded-md hover:bg-white/[0.06] flex items-center justify-center transition-colors">
+                            <ChevronLeft size={12} className="text-white/30 rotate-180" />
+                        </button>
+                    )}
+
+                    {/* Logo - centered and bold */}
+                    <Image
+                        src="/Dw_web_Logo.avif"
+                        alt="DreamWorks"
+                        width={sidebarOpen ? 56 : 36}
+                        height={sidebarOpen ? 56 : 36}
+                        className="rounded-2xl shadow-lg shadow-blue-500/20"
+                    />
+
+                    {sidebarOpen && (
+                        <>
+                            <p className="text-[10px] text-blue-300/50 font-medium mt-3">Admin Panel</p>
+                            <div className={`mt-1.5 px-3 py-1 rounded-lg text-[9px] font-bold uppercase tracking-[0.15em] ${role === "oracle"
                                 ? "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 text-amber-300 border border-amber-500/20"
                                 : role === "admin"
                                     ? "bg-blue-500/10 text-blue-300 border border-blue-500/20"
@@ -146,7 +159,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 }`}>
                                 {role === "oracle" ? "Oracle Access" : role === "admin" ? "Admin" : "Staff"}
                             </div>
-                        </div>
+                        </>
                     )}
                 </div>
 
@@ -208,7 +221,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         {/* Mobile menu header */}
                         <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
                             <div className="flex items-center gap-3">
-                                <Image src="/Dw_web_Logo.avif" alt="DreamWorks" width={36} height={36} className="rounded-xl" />
+                                <Image src="/Dw_web_Logo.avif" alt="DreamWorks" width={40} height={40} className="rounded-xl" />
                                 <div>
                                     <p className="text-[10px] text-blue-300/50 font-medium">Admin Panel</p>
                                     <div className={`mt-1 px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider inline-block ${role === "oracle"
@@ -263,9 +276,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
             )}
 
-            {/* Main content - scrolls independently */}
+            {/* Main content - scrolls independently, fills available height */}
             <main className="flex-1 overflow-y-auto h-screen lg:pt-0 pt-14">
-                <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+                <div className="p-4 lg:p-8 max-w-7xl mx-auto min-h-full">
                     {children}
                 </div>
             </main>

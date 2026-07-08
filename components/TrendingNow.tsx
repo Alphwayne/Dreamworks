@@ -51,7 +51,7 @@ export function TrendingNow({ products }: { products: TrendingProduct[] }) {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-red-500/25 animate-pulse">
                         <Flame size={20} className="text-white" />
                     </div>
                     <div>

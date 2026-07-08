@@ -47,18 +47,18 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
     return (
         <section className="relative w-full">
             <div
-                className="relative overflow-hidden rounded-2xl"
+                className="relative overflow-hidden"
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
             >
                 {/* Very subtle fade edges */}
-                <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-white/40 to-transparent z-10 pointer-events-none" />
-                <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white/40 to-transparent z-10 pointer-events-none" />
+                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#f8f9fa]/80 to-transparent z-10 pointer-events-none" />
+                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#f8f9fa]/80 to-transparent z-10 pointer-events-none" />
 
                 {/* Scrolling row */}
                 <div
                     ref={scrollRef}
-                    className="flex gap-3 overflow-x-hidden"
+                    className="flex gap-5 overflow-x-hidden py-2"
                     style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                 >
                     {displayCategories.map((cat, idx) => (
@@ -67,24 +67,23 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
                             href={cat.isProduct ? `/products/${cat.slug}` : `/collections/${cat.slug}`}
                             className="flex-shrink-0 group/card"
                         >
-                            <div className="relative w-[200px] sm:w-[240px] md:w-[280px] lg:w-[320px] h-[130px] sm:h-[150px] md:h-[170px] rounded-xl overflow-hidden bg-gray-100 shadow-sm group-hover/card:shadow-xl transition-all duration-500 group-hover/card:-translate-y-1">
-                                {/* Background image */}
-                                <Image
-                                    src={cat.image}
-                                    alt={cat.label}
-                                    fill
-                                    className="object-cover group-hover/card:scale-105 transition-transform duration-700"
-                                    sizes="320px"
-                                    quality={85}
-                                />
-                                {/* Dark gradient at bottom only */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                                {/* Label at bottom - clean and minimal */}
-                                <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
-                                    <p className="text-white font-bold text-sm md:text-base tracking-tight drop-shadow-md leading-tight">
-                                        {cat.label}
-                                    </p>
+                            <div className="flex flex-col items-center gap-2.5">
+                                {/* Image container - properly sized with visible image */}
+                                <div className="relative w-[180px] sm:w-[200px] md:w-[220px] lg:w-[250px] h-[160px] sm:h-[180px] md:h-[200px] rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 shadow-md group-hover/card:shadow-xl transition-all duration-500 group-hover/card:-translate-y-1 border border-gray-100/50">
+                                    <Image
+                                        src={cat.image}
+                                        alt={cat.label}
+                                        fill
+                                        className="object-contain p-3 group-hover/card:scale-110 transition-transform duration-700"
+                                        sizes="250px"
+                                        quality={90}
+                                        unoptimized
+                                    />
                                 </div>
+                                {/* Name BELOW the image container */}
+                                <p className="text-gray-800 font-semibold text-xs md:text-sm text-center max-w-[200px] leading-tight line-clamp-2 group-hover/card:text-blue-600 transition-colors">
+                                    {cat.label}
+                                </p>
                             </div>
                         </Link>
                     ))}
