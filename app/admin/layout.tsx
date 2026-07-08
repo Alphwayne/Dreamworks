@@ -8,7 +8,7 @@ import Image from "next/image";
 import {
     LayoutDashboard, Package, ShoppingCart, Users, BarChart3,
     FileText, Code2, UserCog, LogOut, ChevronLeft,
-    Menu, X, Zap
+    Menu, X
 } from "lucide-react";
 
 const ORACLE_EMAIL = "amosudnl896@gmail.com";
@@ -44,11 +44,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const checkAuth = useCallback(async () => {
         try {
-            // Use getSession first (faster, cached) then verify with getUser
             const { data: { session } } = await supabase.auth.getSession();
 
             if (!session?.user?.email) {
-                // No session at all - redirect immediately
                 router.replace("/admin/login");
                 return;
             }
@@ -56,14 +54,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             const userEmail = session.user.email;
             setEmail(userEmail);
 
-            // Oracle check - instant
             if (userEmail === ORACLE_EMAIL) {
                 setRole("oracle");
                 setLoading(false);
                 return;
             }
 
-            // Check admin_users table for other roles
             const { data: adminUser } = await supabase
                 .from("admin_users")
                 .select("role, is_active")
@@ -75,19 +71,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 setRole(adminUser.role as Role);
                 setLoading(false);
             } else {
-                // Not in admin_users - still allow Oracle email
-                // For now, grant admin access to any authenticated user
                 setRole("admin");
                 setLoading(false);
             }
         } catch (error) {
-            // On error, redirect to login
             router.replace("/admin/login");
         }
     }, [router]);
 
     useEffect(() => {
-        // Skip auth check for login page
         if (pathname === "/admin/login") {
             setLoading(false);
             return;
@@ -95,11 +87,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         checkAuth();
 
-        // Safety timeout - if auth takes more than 1.5 seconds, show content anyway
-        // This prevents the infinite "Verifying access..." state
         const timeout = setTimeout(() => {
             setLoading(false);
-            if (!role) setRole("admin"); // Default to admin view on timeout
+            if (!role) setRole("admin");
         }, 1500);
 
         return () => clearTimeout(timeout);
@@ -110,7 +100,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.replace("/admin/login");
     }
 
-    // Allow login page to render without auth
     if (pathname === "/admin/login") {
         return <>{children}</>;
     }
@@ -128,47 +117,42 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const filteredNav = NAV_ITEMS.filter((item) => item.roles.includes(role));
 
     return (
-        <div className="min-h-screen bg-[#f0f2f5] flex">
-            {/* Sidebar - Desktop */}
-            <aside className={`hidden lg:flex flex-col transition-all duration-300 relative ${sidebarOpen ? "w-[260px]" : "w-[72px]"}`}
+        <div className="h-screen bg-[#f0f2f5] flex overflow-hidden">
+            {/* Sidebar - Desktop - FIXED, does not scroll with content */}
+            <aside className={`hidden lg:flex flex-col flex-shrink-0 h-screen sticky top-0 transition-all duration-300 relative ${sidebarOpen ? "w-[240px]" : "w-[72px]"}`}
                 style={{ background: "linear-gradient(180deg, #0d1b3e 0%, #0a1628 50%, #060b14 100%)" }}>
 
                 {/* Subtle side glow */}
                 <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-blue-500/20 via-transparent to-transparent" />
 
-                {/* Logo */}
-                <div className={`h-[72px] flex items-center ${sidebarOpen ? "justify-between px-5" : "justify-center"} border-b border-white/[0.06]`}>
+                {/* Logo + Oracle badge area */}
+                <div className={`flex flex-col items-center pt-5 pb-4 border-b border-white/[0.06] ${sidebarOpen ? "px-5" : "px-2"}`}>
+                    <div className={`flex items-center ${sidebarOpen ? "w-full justify-between" : "justify-center"}`}>
+                        <div className={`flex items-center ${sidebarOpen ? "gap-3" : ""}`}>
+                            <Image src="/Dw_web_Logo.avif" alt="DreamWorks" width={sidebarOpen ? 40 : 34} height={sidebarOpen ? 40 : 34} className="rounded-xl shadow-lg shadow-blue-500/20" />
+                        </div>
+                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="w-7 h-7 rounded-lg hover:bg-white/[0.06] flex items-center justify-center transition-colors">
+                            <ChevronLeft size={14} className={`text-white/30 transition-transform duration-300 ${!sidebarOpen ? "rotate-180" : ""}`} />
+                        </button>
+                    </div>
                     {sidebarOpen && (
-                        <div className="flex items-center gap-3">
-                            <Image src="/Dw_web_Logo.avif" alt="DreamWorks" width={36} height={36} className="rounded-xl shadow-lg shadow-blue-500/20" />
-                            <div>
-                                <span className="font-bold text-white text-sm tracking-tight block leading-tight">DreamWorks</span>
-                                <span className="text-[10px] text-blue-300/40 font-medium">Admin Panel</span>
+                        <div className="w-full mt-3">
+                            <p className="text-[10px] text-blue-300/50 font-medium text-center">Admin Panel</p>
+                            <div className={`mt-2 px-3 py-1.5 rounded-lg text-[9px] font-bold text-center uppercase tracking-[0.15em] ${role === "oracle"
+                                ? "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 text-amber-300 border border-amber-500/20"
+                                : role === "admin"
+                                    ? "bg-blue-500/10 text-blue-300 border border-blue-500/20"
+                                    : "bg-white/5 text-white/40 border border-white/10"
+                                }`}>
+                                {role === "oracle" ? "Oracle Access" : role === "admin" ? "Admin" : "Staff"}
                             </div>
                         </div>
                     )}
-                    <button onClick={() => setSidebarOpen(!sidebarOpen)} className="w-7 h-7 rounded-lg hover:bg-white/[0.06] flex items-center justify-center transition-colors">
-                        <ChevronLeft size={14} className={`text-white/30 transition-transform duration-300 ${!sidebarOpen ? "rotate-180" : ""}`} />
-                    </button>
                 </div>
 
-                {/* Role badge */}
-                {sidebarOpen && (
-                    <div className="px-4 pt-5 pb-2">
-                        <div className={`px-3 py-2 rounded-xl text-[10px] font-bold text-center uppercase tracking-[0.15em] ${role === "oracle"
-                            ? "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 text-amber-300 border border-amber-500/20"
-                            : role === "admin"
-                                ? "bg-blue-500/10 text-blue-300 border border-blue-500/20"
-                                : "bg-white/5 text-white/40 border border-white/10"
-                            }`}>
-                            {role === "oracle" ? "⚡ Oracle Access" : role === "admin" ? "Admin" : "Staff"}
-                        </div>
-                    </div>
-                )}
-
-                {/* Navigation */}
-                <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-                    {sidebarOpen && <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] px-3 mb-3">Navigation</p>}
+                {/* Navigation - scrollable independently */}
+                <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+                    {sidebarOpen && <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] px-3 mb-3">Navigation</p>}
                     {filteredNav.map((item) => {
                         const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
                         const Icon = item.icon;
@@ -192,39 +176,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     })}
                 </nav>
 
-                {/* User section */}
+                {/* Sign out button at bottom */}
                 <div className="border-t border-white/[0.06] p-3">
-                    {sidebarOpen ? (
-                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.03]">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-lg shadow-blue-500/20">
-                                {email[0]?.toUpperCase() || "A"}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-white/80 truncate">{email}</p>
-                                <p className="text-[10px] text-white/30 capitalize font-medium">{role}</p>
-                            </div>
-                            <button onClick={handleSignOut} className="w-8 h-8 rounded-lg hover:bg-red-500/10 flex items-center justify-center group transition-colors">
-                                <LogOut size={14} className="text-white/20 group-hover:text-red-400 transition-colors" />
-                            </button>
-                        </div>
-                    ) : (
-                        <button onClick={handleSignOut} className="w-full flex items-center justify-center py-2" title="Sign Out">
-                            <LogOut size={16} className="text-white/20 hover:text-red-400 transition-colors" />
-                        </button>
-                    )}
+                    <button
+                        onClick={handleSignOut}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white/30 hover:bg-red-500/10 hover:text-red-400 transition-all ${!sidebarOpen ? "justify-center" : ""}`}
+                    >
+                        <LogOut size={16} />
+                        {sidebarOpen && <span>Sign Out</span>}
+                    </button>
                 </div>
             </aside>
 
             {/* Mobile header */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-[#0d1b3e] border-b border-white/[0.06] flex items-center justify-between px-4 z-50 backdrop-blur-xl">
-                <button onClick={() => setMobileMenuOpen(true)} className="w-9 h-9 rounded-lg bg-white/[0.06] flex items-center justify-center">
+            <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-[#0d1b3e]/95 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between px-4 z-50">
+                <button onClick={() => setMobileMenuOpen(true)} className="w-9 h-9 rounded-xl bg-white/[0.06] flex items-center justify-center">
                     <Menu size={18} className="text-white/60" />
                 </button>
-                <div className="flex items-center gap-2">
-                    <Image src="/Dw_web_Logo.avif" alt="DreamWorks" width={28} height={28} className="rounded-lg" />
-                    <span className="font-bold text-white text-sm">DreamWorks</span>
-                </div>
-                <button onClick={handleSignOut} className="w-9 h-9 rounded-lg bg-white/[0.06] flex items-center justify-center">
+                <Image src="/Dw_web_Logo.avif" alt="DreamWorks" width={32} height={32} className="rounded-xl" />
+                <button onClick={handleSignOut} className="w-9 h-9 rounded-xl bg-white/[0.06] flex items-center justify-center">
                     <LogOut size={16} className="text-white/40" />
                 </button>
             </div>
@@ -233,44 +203,69 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {mobileMenuOpen && (
                 <div className="lg:hidden fixed inset-0 z-50">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
-                    <div className="absolute left-0 top-0 bottom-0 w-72 shadow-2xl p-5"
+                    <div className="absolute left-0 top-0 bottom-0 w-72 shadow-2xl flex flex-col"
                         style={{ background: "linear-gradient(180deg, #0d1b3e 0%, #0a1628 50%, #060b14 100%)" }}>
-                        <div className="flex items-center justify-between mb-8">
-                            <div className="flex items-center gap-2.5">
-                                <Image src="/Dw_web_Logo.avif" alt="DreamWorks" width={32} height={32} className="rounded-xl" />
-                                <span className="font-bold text-white text-sm">DreamWorks</span>
+                        {/* Mobile menu header */}
+                        <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
+                            <div className="flex items-center gap-3">
+                                <Image src="/Dw_web_Logo.avif" alt="DreamWorks" width={36} height={36} className="rounded-xl" />
+                                <div>
+                                    <p className="text-[10px] text-blue-300/50 font-medium">Admin Panel</p>
+                                    <div className={`mt-1 px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider inline-block ${role === "oracle"
+                                        ? "bg-amber-500/10 text-amber-300 border border-amber-500/20"
+                                        : "bg-blue-500/10 text-blue-300 border border-blue-500/20"
+                                        }`}>
+                                        {role === "oracle" ? "Oracle" : role || "Admin"}
+                                    </div>
+                                </div>
                             </div>
                             <button onClick={() => setMobileMenuOpen(false)} className="w-8 h-8 rounded-lg hover:bg-white/[0.06] flex items-center justify-center">
                                 <X size={18} className="text-white/40" />
                             </button>
                         </div>
-                        <nav className="space-y-1">
+
+                        {/* Mobile nav */}
+                        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                             {filteredNav.map((item) => {
-                                const isActive = pathname === item.href;
+                                const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
                                 const Icon = item.icon;
                                 return (
                                     <Link
                                         key={item.href}
                                         href={item.href}
                                         onClick={() => setMobileMenuOpen(false)}
-                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
                                             ? "bg-blue-500/15 text-blue-300"
                                             : "text-white/40 hover:bg-white/[0.04] hover:text-white/70"
                                             }`}
                                     >
                                         <Icon size={18} className={isActive ? "text-blue-400" : "text-white/30"} />
                                         <span>{item.label}</span>
+                                        {isActive && (
+                                            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />
+                                        )}
                                     </Link>
                                 );
                             })}
                         </nav>
+
+                        {/* Mobile sign out */}
+                        <div className="border-t border-white/[0.06] p-4">
+                            <button
+                                onClick={handleSignOut}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-white/30 hover:bg-red-500/10 hover:text-red-400 transition-all"
+                            >
+                                <LogOut size={16} />
+                                <span>Sign Out</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
 
-            {/* Main content */}
-            <main className="flex-1 lg:p-8 p-4 pt-18 lg:pt-8 overflow-y-auto min-h-screen">
-                <div className="max-w-7xl mx-auto">
+            {/* Main content - scrolls independently */}
+            <main className="flex-1 overflow-y-auto h-screen lg:pt-0 pt-14">
+                <div className="p-4 lg:p-8 max-w-7xl mx-auto">
                     {children}
                 </div>
             </main>

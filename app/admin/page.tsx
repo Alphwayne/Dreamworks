@@ -5,8 +5,8 @@ import Link from "next/link";
 // Uses API route instead of direct Supabase calls
 import {
     Package, ShoppingCart, Users, TrendingUp, AlertCircle, ChevronRight,
-    ArrowUpRight, ArrowDownRight, DollarSign, Eye, Zap, Clock,
-    BarChart3, Activity, Sparkles, ArrowRight
+    ArrowUpRight, ArrowDownRight, DollarSign, Eye, Clock,
+    BarChart3, Activity, Layers, ArrowRight, PlusCircle, FileText, LineChart
 } from "lucide-react";
 import { formatPrice } from "@/lib/types";
 
@@ -104,7 +104,7 @@ export default function AdminDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
-                        <Sparkles size={16} className="text-blue-500" />
+                        <Activity size={16} className="text-blue-500" />
                         <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Overview</span>
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
@@ -290,21 +290,21 @@ export default function AdminDashboard() {
                     <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
                         <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center">
-                                <Sparkles size={14} className="text-gray-600" />
+                                <Layers size={14} className="text-gray-600" />
                             </div>
                             Quick Actions
                         </h2>
                         <div className="space-y-2">
                             {[
-                                { label: "Add New Product", href: "/admin/products", icon: "📦", color: "hover:bg-blue-50 hover:border-blue-100" },
-                                { label: "Manage Orders", href: "/admin/orders", icon: "🛒", color: "hover:bg-blue-50 hover:border-blue-100" },
-                                { label: "View Customers", href: "/admin/customers", icon: "👥", color: "hover:bg-indigo-50 hover:border-indigo-100" },
-                                { label: "Edit Homepage", href: "/admin/content", icon: "🎨", color: "hover:bg-sky-50 hover:border-sky-100" },
-                                { label: "View Analytics", href: "/admin/analytics", icon: "📊", color: "hover:bg-blue-50 hover:border-blue-100" },
+                                { label: "Add New Product", href: "/admin/products", Icon: PlusCircle, color: "hover:bg-blue-50 hover:border-blue-100" },
+                                { label: "Manage Orders", href: "/admin/orders", Icon: ShoppingCart, color: "hover:bg-blue-50 hover:border-blue-100" },
+                                { label: "View Customers", href: "/admin/customers", Icon: Users, color: "hover:bg-indigo-50 hover:border-indigo-100" },
+                                { label: "Edit Homepage", href: "/admin/content", Icon: FileText, color: "hover:bg-sky-50 hover:border-sky-100" },
+                                { label: "View Analytics", href: "/admin/analytics", Icon: LineChart, color: "hover:bg-blue-50 hover:border-blue-100" },
                             ].map((item) => (
                                 <Link key={item.href} href={item.href}
                                     className={`flex items-center gap-3 p-3 bg-gray-50/50 rounded-xl border border-transparent transition-all duration-200 text-sm font-medium text-gray-700 ${item.color}`}>
-                                    <span className="text-base">{item.icon}</span>
+                                    <item.Icon size={16} className="text-gray-500" />
                                     <span>{item.label}</span>
                                     <ArrowRight size={13} className="ml-auto text-gray-300" />
                                 </Link>

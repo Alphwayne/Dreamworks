@@ -161,17 +161,35 @@ async function getBundles() {
   return bundles.filter((b) => b.products.length >= 3);
 }
 
-// Fetch catchy featured products for the visual strip
+// Fetch catchy featured products from different categories for the visual strip
 async function getCatchyProducts() {
-  const { data } = await supabase
-    .from("products")
-    .select("id, product_name, selling_price, image_url, slug, category")
-    .eq("is_active", true)
-    .not("image_url", "is", null)
-    .order("selling_price", { ascending: false })
-    .limit(12);
-  return (data || []).map((p) => ({
-    label: p.product_name.length > 28 ? p.product_name.slice(0, 28) + "..." : p.product_name,
+  const categories = [
+    "COMPUTING ACCESSORIES", "MOBILE & TABLET", "CONSUMER ELECTRONICS",
+    "ENTERPRISE", "ACCESSORIES", "POWER", "APPLE",
+  ];
+  const results = await Promise.all(
+    categories.map((cat) =>
+      supabase
+        .from("products")
+        .select("id, product_name, selling_price, image_url, slug, category")
+        .eq("category", cat)
+        .eq("is_active", true)
+        .not("image_url", "is", null)
+        .order("selling_price", { ascending: false })
+        .limit(2)
+        .then(({ data }) => data || [])
+    )
+  );
+  // Interleave products from different categories
+  const mixed: any[] = [];
+  const maxLen = Math.max(...results.map((r) => r.length));
+  for (let i = 0; i < maxLen; i++) {
+    for (const arr of results) {
+      if (arr[i]) mixed.push(arr[i]);
+    }
+  }
+  return mixed.slice(0, 14).map((p) => ({
+    label: p.product_name.length > 30 ? p.product_name.slice(0, 30) + "..." : p.product_name,
     slug: p.slug || p.id,
     image: p.image_url || "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&q=75",
     isProduct: true,

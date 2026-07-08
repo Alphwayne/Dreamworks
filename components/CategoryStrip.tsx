@@ -84,9 +84,6 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
                                     <p className="text-white font-bold text-sm md:text-base tracking-tight drop-shadow-md leading-tight">
                                         {cat.label}
                                     </p>
-                                    {cat.isProduct && (
-                                        <p className="text-white/70 text-[11px] mt-0.5 font-medium">Shop now &rarr;</p>
-                                    )}
                                 </div>
                             </div>
                         </Link>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Rocket, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Flame, Zap } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatPrice } from "@/lib/types";
@@ -19,7 +19,6 @@ interface NewProduct {
 export function JustLaunched({ products }: { products: NewProduct[] }) {
     if (!products.length) return null;
 
-    // Take the first (newest) product as the hero, rest as supporting
     const hero = products[0];
     const supporting = products.slice(1, 5);
 
@@ -27,8 +26,8 @@ export function JustLaunched({ products }: { products: NewProduct[] }) {
         <section className="py-10 px-4 max-w-7xl mx-auto">
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 animate-bounce" style={{ animationDuration: "3s" }}>
-                    <Rocket size={20} className="text-white" />
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <Flame size={20} className="text-white" />
                 </div>
                 <div>
                     <h2 className="text-xl md:text-2xl font-bold text-gray-900">Just Launched</h2>
@@ -43,8 +42,8 @@ export function JustLaunched({ products }: { products: NewProduct[] }) {
                     <div className="relative h-full min-h-[360px] bg-gradient-to-br from-blue-50 via-indigo-50 to-sky-50 rounded-3xl border border-gray-100 overflow-hidden hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
                         {/* Badge */}
                         <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
-                            <span className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg shadow-blue-500/30">
-                                <Sparkles size={10} /> NEW
+                            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg shadow-blue-500/30">
+                                <Zap size={10} /> NEW DROP
                             </span>
                             <span className="bg-white/80 backdrop-blur-sm text-gray-600 text-[10px] font-semibold px-2.5 py-1.5 rounded-full">
                                 {new Date(hero.created_at).toLocaleDateString("en-NG", { month: "short", day: "numeric" })}
@@ -89,20 +88,20 @@ export function JustLaunched({ products }: { products: NewProduct[] }) {
                     <Link key={product.id} href={`/products/${product.slug}`} className="group">
                         <div className="bg-white rounded-2xl border border-gray-100 p-4 h-full hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300 hover:-translate-y-0.5 flex flex-col">
                             {/* Image */}
-                            <div className="relative h-32 bg-gray-50 rounded-xl mb-3 overflow-hidden">
+                            <div className="relative h-32 bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-xl mb-3 overflow-hidden">
                                 <Image
                                     src={product.image_url || "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&q=75"}
                                     alt={product.product_name}
                                     fill
                                     className="object-contain p-3 group-hover:scale-110 transition-transform duration-500"
                                 />
-                                <span className="absolute top-2 left-2 bg-blue-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-md">
+                                <span className="absolute top-2 left-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-md">
                                     NEW
                                 </span>
                             </div>
 
                             {/* Info */}
-                            <p className="text-[9px] text-gray-400 uppercase font-bold tracking-wider">{product.category?.split(" ")[0]}</p>
+                            <p className="text-[9px] text-blue-500 uppercase font-bold tracking-wider">{product.category?.split(" ")[0]}</p>
                             <h3 className="text-xs font-bold text-gray-900 line-clamp-2 mt-1 leading-tight group-hover:text-blue-600 transition-colors flex-1">
                                 {product.product_name}
                             </h3>
