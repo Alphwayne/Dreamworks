@@ -19,9 +19,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect, useRef } from "react";
 import { useCartStore } from "@/store/cartStore";
-import { formatPrice, CATEGORY_MAP } from "@/lib/types";
-import { searchProducts } from "@/lib/api/products";
-import { Product } from "@/lib/types";
+import { formatPrice, CATEGORY_MAP, Product } from "@/lib/types";
 
 // ─── NAVIGATION DATA ─────────────────────────────────────────────
 
@@ -176,9 +174,14 @@ export function Header() {
     useEffect(() => {
         if (!searchQuery.trim()) { setSearchResults([]); setShowResults(false); return; }
         const timer = setTimeout(async () => {
-            const results = await searchProducts(searchQuery, 5);
-            setSearchResults(results);
-            setShowResults(true);
+            try {
+                const res = await fetch(`/api/products?search=${encodeURIComponent(searchQuery)}&limit=5`);
+                const json = await res.json();
+                setSearchResults(json.products || []);
+                setShowResults(true);
+            } catch (err) {
+                console.error("Header search error:", err);
+            }
         }, 300);
         return () => clearTimeout(timer);
     }, [searchQuery]);

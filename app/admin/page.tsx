@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+// Uses API route instead of direct Supabase calls
 import {
     Package, ShoppingCart, Users, TrendingUp, AlertCircle, ChevronRight,
     ArrowUpRight, ArrowDownRight, DollarSign, Eye, Zap, Clock,
@@ -39,47 +39,34 @@ export default function AdminDashboard() {
 
     async function loadStats() {
         try {
+            const res = await fetch("/api/admin/stats");
+            const data = await res.json();
+
+            if (data.error) {
+                console.error("Dashboard API error:", data.error);
+            }
+
+            // Calculate today/week stats from recent orders
             const now = new Date();
-            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-            const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-            // Fetch all data in parallel
-            const [ordersRes, productsRes, customersRes, recentRes, inventoryRes, todayOrdersRes, weekOrdersRes, topProductsRes] = await Promise.all([
-                supabase.from("orders").select("total", { count: "exact" }),
-                supabase.from("products").select("id", { count: "exact" }).eq("is_active", true),
-                supabase.from("customers").select("id", { count: "exact" }),
-                supabase.from("orders").select("order_number,total,financial_status,fulfillment_status,created_at,email,billing_name").order("created_at", { ascending: false }).limit(8),
-                supabase.from("inventory").select("title,available,sku").not("available", "is", null).lt("available", 5).gt("available", 0).limit(8),
-                supabase.from("orders").select("total").gte("created_at", todayStart),
-                supabase.from("orders").select("total").gte("created_at", weekStart),
-                supabase.from("order_items").select("lineitem_name, lineitem_quantity").order("lineitem_quantity", { ascending: false }).limit(5),
-            ]);
-
-            // Log errors for debugging
-            if (ordersRes.error) console.error("Orders query error:", ordersRes.error);
-            if (productsRes.error) console.error("Products query error:", productsRes.error);
-            if (customersRes.error) console.error("Customers query error:", customersRes.error);
-            if (recentRes.error) console.error("Recent orders error:", recentRes.error);
-
-            // The orders select with count:exact fetches ALL rows to count them
-            // For revenue, we need to sum the total column from all orders
-            // But Supabase limits to 1000 rows by default - use count for totals
-            const revenue = (ordersRes.data || []).reduce((s: number, o: any) => s + (Number(o.total) || 0), 0);
-            const todayRev = (todayOrdersRes.data || []).reduce((s: number, o: any) => s + (Number(o.total) || 0), 0);
-            const weekRev = (weekOrdersRes.data || []).reduce((s: number, o: any) => s + (Number(o.total) || 0), 0);
+            const recentOrders = data.recentOrders || [];
+            const todayOrders = recentOrders.filter((o: any) => new Date(o.created_at) >= todayStart);
+            const weekOrders = recentOrders.filter((o: any) => new Date(o.created_at) >= weekStart);
 
             setStats({
-                totalOrders: ordersRes.count || (ordersRes.data?.length || 0),
-                totalRevenue: revenue,
-                totalProducts: productsRes.count || (productsRes.data?.length || 0),
-                totalCustomers: customersRes.count || (customersRes.data?.length || 0),
-                todayOrders: todayOrdersRes.data?.length || 0,
-                todayRevenue: todayRev,
-                weekOrders: weekOrdersRes.data?.length || 0,
-                weekRevenue: weekRev,
-                recentOrders: recentRes.data || [],
-                lowStock: inventoryRes.data || [],
-                topProducts: topProductsRes.data || [],
+                totalOrders: data.totalOrders || 0,
+                totalRevenue: data.totalRevenue || 0,
+                totalProducts: data.activeProducts || 0,
+                totalCustomers: data.totalCustomers || 0,
+                todayOrders: todayOrders.length,
+                todayRevenue: todayOrders.reduce((s: number, o: any) => s + (Number(o.total) || 0), 0),
+                weekOrders: weekOrders.length,
+                weekRevenue: weekOrders.reduce((s: number, o: any) => s + (Number(o.total) || 0), 0),
+                recentOrders: recentOrders,
+                lowStock: data.lowStock || [],
+                topProducts: data.topProducts || [],
             });
         } catch (err) {
             console.error("Dashboard loadStats error:", err);
@@ -271,8 +258,8 @@ export default function AdminDashboard() {
                                                 i === 2 ? "bg-gradient-to-br from-orange-300 to-orange-500 text-white" :
                                                     "bg-gray-100 text-gray-500"
                                             }`}>{i + 1}</span>
-                                        <p className="text-xs font-medium text-gray-700 flex-1 line-clamp-1">{item.lineitem_name}</p>
-                                        <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">{item.lineitem_quantity}</span>
+                                        <p className="text-xs font-medium text-gray-700 flex-1 line-clamp-1">{item.name || item.lineitem_name}</p>
+                                        <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">{item.quantity || item.lineitem_quantity}</span>
                                     </div>
                                 ))
                             )}
@@ -291,8 +278,8 @@ export default function AdminDashboard() {
                             <div className="space-y-2.5">
                                 {stats.lowStock.map((item) => (
                                     <div key={item.sku} className="flex items-center justify-between p-3 bg-orange-50/50 rounded-xl border border-orange-100/50">
-                                        <p className="text-xs font-medium text-gray-700 truncate flex-1">{item.title}</p>
-                                        <span className="text-[11px] font-bold text-orange-600 ml-2 flex-shrink-0 bg-orange-100 px-2 py-0.5 rounded-md">{item.available} left</span>
+                                        <p className="text-xs font-medium text-gray-700 truncate flex-1">{item.sku || item.title}</p>
+                                        <span className="text-[11px] font-bold text-orange-600 ml-2 flex-shrink-0 bg-orange-100 px-2 py-0.5 rounded-md">{item.quantity || item.available} left</span>
                                     </div>
                                 ))}
                             </div>

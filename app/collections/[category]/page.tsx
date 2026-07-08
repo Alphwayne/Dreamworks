@@ -11,7 +11,7 @@ import { Header } from "@/components/Header";
 
 import { CartDrawer } from "@/components/CartDrawer";
 import { ProductCard } from "@/components/ProductCard";
-import { getProducts } from "@/lib/api/products";
+// Uses API route instead of direct Supabase calls
 import { Product, SLUG_TO_CATEGORY, CATEGORY_MAP } from "@/lib/types";
 
 const SORT_OPTIONS = [
@@ -61,6 +61,7 @@ export default function CollectionPage() {
         : CATEGORY_MAP[dbCategory || ""] || { label: categorySlug, slug: categorySlug };
 
     const subCategory = searchParams.get("sub") || "";
+    const brandParam = searchParams.get("brand") || "";
     const [products, setProducts] = useState<Product[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -76,33 +77,33 @@ export default function CollectionPage() {
         setLoading(true);
         try {
             const [sortBy, sortOrder] = sort.split("-") as [string, "asc" | "desc"];
-            // Only use manual search input, NOT sub-category (product names don't match sub labels)
-            console.log("[Collections] Fetching:", { category: dbCategory, slug: categorySlug, sub: subCategory, search, sortBy, sortOrder, page });
-            const { products: data, count } = await getProducts({
-                category: dbCategory,
-                search: search || undefined,
-                limit: PAGE_SIZE,
-                offset: (page - 1) * PAGE_SIZE,
-                sortBy,
-                sortOrder,
-            });
+            const params = new URLSearchParams();
+            if (dbCategory) params.set("category", dbCategory);
+            if (search) params.set("search", search);
+            if (brandParam) params.set("brand", brandParam);
+            params.set("limit", String(PAGE_SIZE));
+            params.set("offset", String((page - 1) * PAGE_SIZE));
+            params.set("sortBy", sortBy);
+            params.set("sortOrder", sortOrder);
 
-            console.log("[Collections] Got", data.length, "products, total:", count);
+            const res = await fetch(`/api/products?${params.toString()}`);
+            const json = await res.json();
+            const data = json.products || [];
+            const count = json.count || 0;
 
             const range = PRICE_RANGES[priceRange];
             const filtered = data.filter(
-                (p) => p.selling_price >= range.min && p.selling_price <= range.max
+                (p: Product) => p.selling_price >= range.min && p.selling_price <= range.max
             );
 
             setProducts(filtered);
             setTotal(count);
         } catch (err: any) {
             console.error("[Collections] FETCH ERROR:", err?.message || err);
-            console.error("[Collections] Category slug:", categorySlug, "→ DB category:", dbCategory);
         } finally {
             setLoading(false);
         }
-    }, [dbCategory, categorySlug, subCategory, search, page, sort, priceRange]);
+    }, [dbCategory, categorySlug, subCategory, search, brandParam, page, sort, priceRange]);
 
     useEffect(() => {
         fetchProducts();

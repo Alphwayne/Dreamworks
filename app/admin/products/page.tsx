@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+// Uses API routes instead of direct Supabase calls
 import { Search, Plus, Edit2, Trash2, ToggleLeft, ToggleRight, Package, RefreshCw, AlertTriangle } from "lucide-react";
 import { formatPrice, CATEGORY_MAP, getProductImage } from "@/lib/types";
 import Image from "next/image";
@@ -28,34 +28,22 @@ export default function AdminProductsPage() {
         setLoading(true);
         setError(null);
         try {
-            // First get total count
-            const { count, error: countError } = await supabase
-                .from("products")
-                .select("*", { count: "exact", head: true });
+            const params = new URLSearchParams();
+            params.set("limit", String(PAGE_SIZE));
+            params.set("offset", String(page * PAGE_SIZE));
+            params.set("showInactive", "true");
 
-            if (countError) {
-                console.error("Count error:", countError);
-                setError(`Failed to count products: ${countError.message}`);
-                setLoading(false);
-                return;
-            }
-            setTotalCount(count || 0);
+            const res = await fetch(`/api/admin/products?${params.toString()}`);
+            const json = await res.json();
 
-            // Then fetch paginated data
-            const { data, error: fetchError } = await supabase
-                .from("products")
-                .select("*")
-                .order("created_at", { ascending: false })
-                .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-
-            if (fetchError) {
-                console.error("Fetch error:", fetchError);
-                setError(`Failed to load products: ${fetchError.message}`);
+            if (json.error) {
+                setError(`Failed to load products: ${json.error}`);
                 setLoading(false);
                 return;
             }
 
-            setProducts(data || []);
+            setProducts(json.products || []);
+            setTotalCount(json.count || 0);
         } catch (err: any) {
             console.error("Unexpected error:", err);
             setError(`Unexpected error: ${err.message}`);
@@ -85,7 +73,7 @@ export default function AdminProductsPage() {
 
     async function saveProduct() {
         setSaving(true);
-        const payload = {
+        const payload: any = {
             product_name: form.product_name,
             category: form.category,
             selling_price: Number(form.selling_price),
@@ -96,10 +84,20 @@ export default function AdminProductsPage() {
         };
 
         if (editing) {
-            await supabase.from("products").update(payload).eq("id", editing.id);
+            payload.id = editing.id;
+            await fetch("/api/admin/products", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
         } else {
-            const slug = form.product_name.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "-") + "-" + Date.now();
-            await supabase.from("products").insert({ ...payload, slug, item_code: `DW-${Date.now()}` });
+            payload.slug = form.product_name.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "-") + "-" + Date.now();
+            payload.item_code = `DW-${Date.now()}`;
+            await fetch("/api/admin/products", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
         }
         await loadProducts();
         setShowModal(false);
@@ -107,13 +105,21 @@ export default function AdminProductsPage() {
     }
 
     async function toggleActive(product: any) {
-        await supabase.from("products").update({ is_active: !product.is_active }).eq("id", product.id);
+        await fetch("/api/admin/products", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: product.id, is_active: !product.is_active }),
+        });
         setProducts((prev) => prev.map((p) => p.id === product.id ? { ...p, is_active: !p.is_active } : p));
     }
 
     async function deleteProduct(id: number) {
         if (!confirm("Delete this product?")) return;
-        await supabase.from("products").delete().eq("id", id);
+        await fetch("/api/admin/products", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id }),
+        });
         setProducts((prev) => prev.filter((p) => p.id !== id));
         setTotalCount((prev) => prev - 1);
     }

@@ -10,7 +10,7 @@ import { Header } from "@/components/Header";
 import { FloatingElements } from "@/components/FloatingElements";
 import { CartDrawer } from "@/components/CartDrawer";
 import { ProductCard } from "@/components/ProductCard";
-import { getProductBySlug, getRelatedProducts, getInventory } from "@/lib/api/products";
+// Uses API route instead of direct Supabase calls
 import { useCartStore } from "@/store/cartStore";
 import { Product, Inventory, formatPrice, formatDiscount, getProductImage, CATEGORY_MAP } from "@/lib/types";
 
@@ -30,15 +30,18 @@ export default function ProductDetailPage() {
     useEffect(() => {
         async function load() {
             setLoading(true);
-            const p = await getProductBySlug(slug);
-            if (p) {
-                setProduct(p);
-                const [inv, rel] = await Promise.all([
-                    getInventory(p.item_code),
-                    getRelatedProducts(p.category, p.id),
-                ]);
-                setInventory(inv);
-                setRelated(rel);
+            try {
+                const res = await fetch(`/api/products/${slug}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.product) {
+                        setProduct(data.product);
+                        setInventory(data.inventory);
+                        setRelated(data.related || []);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load product:", err);
             }
             setLoading(false);
         }
@@ -270,7 +273,7 @@ export default function ProductDetailPage() {
                 </div>
 
                 {/* Sticky add to cart (mobile) */}
-                <div className="fixed bottom-16 left-0 right-0 p-3 bg-white border-t border-gray-100 md:hidden z-30">
+                <div className="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-100 md:hidden z-30">
                     <button
                         onClick={handleAddToCart}
                         disabled={!isInStock}

@@ -9,7 +9,7 @@ import { Header } from "@/components/Header";
 import { FloatingElements } from "@/components/FloatingElements";
 import { CartDrawer } from "@/components/CartDrawer";
 import { ProductCard } from "@/components/ProductCard";
-import { searchProducts, getProducts } from "@/lib/api/products";
+// Uses API routes instead of direct Supabase calls
 import { Product } from "@/lib/types";
 import { useRouter } from "next/navigation";
 
@@ -27,15 +27,20 @@ function SearchContent() {
 
     useEffect(() => {
         // Load trending products for empty state
-        getProducts({ limit: 8 }).then(({ products }) => setTrending(products));
+        fetch("/api/products?limit=8").then(r => r.json()).then(json => setTrending(json.products || []));
     }, []);
 
     useEffect(() => {
         if (!query.trim()) { setResults([]); return; }
         setLoading(true);
         const timer = setTimeout(async () => {
-            const data = await searchProducts(query, 24);
-            setResults(data);
+            try {
+                const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=24`);
+                const json = await res.json();
+                setResults(json.products || []);
+            } catch (err) {
+                console.error("Search error:", err);
+            }
             setLoading(false);
         }, 300);
         return () => clearTimeout(timer);
