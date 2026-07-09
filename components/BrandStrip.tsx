@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const BRANDS = [
     { name: "HP", slug: "hp", border: "rgba(0,150,214,0.20)", glow: "rgba(0,150,214,0.12)", svg: <svg viewBox="0 0 48 48" className="w-8 h-8" fill="none"><text x="4" y="36" fontSize="28" fontWeight="900" fill="#0096D6" fontFamily="Arial">hp</text></svg> },
@@ -52,9 +52,67 @@ function BrandCard({ brand }: { brand: typeof BRANDS[number] }) {
 
 export function BrandStrip() {
     const [isPaused, setIsPaused] = useState(false);
+    const trackRef = useRef<HTMLDivElement>(null);
+    const touchStartX = useRef(0);
+    const scrollOffset = useRef(0);
+    const currentTranslate = useRef(0);
+    const resumeTimer = useRef<NodeJS.Timeout | null>(null);
 
     // Duplicate brands for seamless loop on mobile
     const mobileItems = [...BRANDS, ...BRANDS];
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        setIsPaused(true);
+        touchStartX.current = e.touches[0].clientX;
+
+        if (trackRef.current) {
+            const style = window.getComputedStyle(trackRef.current);
+            const matrix = new DOMMatrix(style.transform);
+            currentTranslate.current = matrix.m41;
+            scrollOffset.current = currentTranslate.current;
+            trackRef.current.style.animation = "none";
+            trackRef.current.style.transform = `translateX(${currentTranslate.current}px)`;
+        }
+
+        if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!trackRef.current) return;
+        const diff = e.touches[0].clientX - touchStartX.current;
+        const newTranslate = scrollOffset.current + diff;
+        trackRef.current.style.transform = `translateX(${newTranslate}px)`;
+        currentTranslate.current = newTranslate;
+    };
+
+    const handleTouchEnd = () => {
+        if (!trackRef.current) return;
+
+        const trackWidth = trackRef.current.scrollWidth / 2;
+        let finalPos = currentTranslate.current;
+        if (finalPos > 0) finalPos = -trackWidth + finalPos;
+        if (finalPos < -trackWidth) finalPos = finalPos + trackWidth;
+
+        trackRef.current.style.transform = `translateX(${finalPos}px)`;
+        currentTranslate.current = finalPos;
+
+        resumeTimer.current = setTimeout(() => {
+            if (trackRef.current) {
+                const tw = trackRef.current.scrollWidth / 2;
+                const progress = Math.abs(finalPos) / tw;
+                trackRef.current.style.animation = "";
+                trackRef.current.style.transform = "";
+                trackRef.current.style.animationDelay = `-${progress * 18}s`;
+            }
+            setIsPaused(false);
+        }, 2500);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (resumeTimer.current) clearTimeout(resumeTimer.current);
+        };
+    }, []);
 
     return (
         <section
@@ -83,15 +141,15 @@ export function BrandStrip() {
                     </Link>
                 </div>
 
-                {/* Mobile: CSS-animated auto-scrolling carousel (3 per view) */}
-                <div
-                    className="md:hidden overflow-hidden"
-                    onTouchStart={() => setIsPaused(true)}
-                    onTouchEnd={() => setTimeout(() => setIsPaused(false), 2000)}
-                >
+                {/* Mobile: CSS-animated auto-scrolling carousel (3 per view) with swipe */}
+                <div className="md:hidden overflow-hidden">
                     <div
+                        ref={trackRef}
                         className="flex gap-3 brand-scroll-track"
                         style={{ animationPlayState: isPaused ? "paused" : "running" }}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
                     >
                         {mobileItems.map((brand, i) => (
                             <div
@@ -138,10 +196,11 @@ export function BrandStrip() {
                     100% { transform: translateX(200%); }
                 }
                 .brand-scroll-track {
-                    animation: brandCarouselScroll 30s linear infinite;
+                    animation: brandCarouselScroll 18s linear infinite;
                     will-change: transform;
                     -webkit-transform: translateZ(0);
                     transform: translateZ(0);
+                    touch-action: pan-x;
                 }
             `}</style>
         </section>

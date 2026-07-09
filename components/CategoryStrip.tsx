@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface CategoryItem {
     label: string;
@@ -17,12 +17,76 @@ interface CategoryStripProps {
 
 export function CategoryStrip({ categories }: CategoryStripProps) {
     const [isPaused, setIsPaused] = useState(false);
+    const trackRef = useRef<HTMLDivElement>(null);
+    const touchStartX = useRef(0);
+    const scrollOffset = useRef(0);
+    const currentTranslate = useRef(0);
+    const resumeTimer = useRef<NodeJS.Timeout | null>(null);
 
     // Duplicate items for seamless infinite loop
     const displayCategories = [...categories, ...categories];
 
-    // Calculate animation duration based on item count (slower = smoother)
-    const duration = categories.length * 3;
+    // Speed: faster than before (was categories.length * 3, now * 1.8)
+    const duration = categories.length * 1.8;
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        setIsPaused(true);
+        touchStartX.current = e.touches[0].clientX;
+
+        // Get current computed translateX
+        if (trackRef.current) {
+            const style = window.getComputedStyle(trackRef.current);
+            const matrix = new DOMMatrix(style.transform);
+            currentTranslate.current = matrix.m41;
+            scrollOffset.current = currentTranslate.current;
+            trackRef.current.style.animation = "none";
+            trackRef.current.style.transform = `translateX(${currentTranslate.current}px)`;
+        }
+
+        if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!trackRef.current) return;
+        const diff = e.touches[0].clientX - touchStartX.current;
+        const newTranslate = scrollOffset.current + diff;
+        trackRef.current.style.transform = `translateX(${newTranslate}px)`;
+        currentTranslate.current = newTranslate;
+    };
+
+    const handleTouchEnd = () => {
+        if (!trackRef.current) return;
+
+        // Wrap around if scrolled too far
+        const trackWidth = trackRef.current.scrollWidth / 2;
+        let finalPos = currentTranslate.current;
+        if (finalPos > 0) finalPos = -trackWidth + finalPos;
+        if (finalPos < -trackWidth) finalPos = finalPos + trackWidth;
+
+        trackRef.current.style.transform = `translateX(${finalPos}px)`;
+        currentTranslate.current = finalPos;
+
+        // Resume auto-scroll after 2.5s
+        resumeTimer.current = setTimeout(() => {
+            if (trackRef.current) {
+                // Calculate what percentage through the animation we are
+                const trackWidth = trackRef.current.scrollWidth / 2;
+                const progress = Math.abs(finalPos) / trackWidth;
+                const remainingDuration = duration * (1 - progress);
+
+                trackRef.current.style.animation = "";
+                trackRef.current.style.transform = "";
+                trackRef.current.style.animationDelay = `-${progress * duration}s`;
+            }
+            setIsPaused(false);
+        }, 2500);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (resumeTimer.current) clearTimeout(resumeTimer.current);
+        };
+    }, []);
 
     return (
         <section className="relative w-full">
@@ -30,15 +94,17 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
                 className="relative overflow-hidden"
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
-                onTouchStart={() => setIsPaused(true)}
-                onTouchEnd={() => setTimeout(() => setIsPaused(false), 2000)}
             >
                 <div
+                    ref={trackRef}
                     className="flex gap-5 py-2 category-scroll-track"
                     style={{
                         animationPlayState: isPaused ? "paused" : "running",
                         animationDuration: `${duration}s`,
                     }}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
                 >
                     {displayCategories.map((cat, idx) => (
                         <Link
@@ -70,10 +136,11 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
                     100% { transform: translateX(-50%); }
                 }
                 .category-scroll-track {
-                    animation: categoryScroll 30s linear infinite;
+                    animation: categoryScroll ${duration}s linear infinite;
                     will-change: transform;
                     -webkit-transform: translateZ(0);
                     transform: translateZ(0);
+                    touch-action: pan-x;
                 }
             `}</style>
         </section>
