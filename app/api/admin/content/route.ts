@@ -1,12 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-server";
+import { createClient } from "@supabase/supabase-js";
+
+// Create a robust server-side client - tries service role key first, falls back to anon
+function getSupabaseAdmin() {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+    const key = serviceKey || anonKey;
+
+    return createClient(url, key, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+}
 
 // GET - Load all content for admin content manager
 export async function GET() {
+    const supabase = getSupabaseAdmin();
     const results: any = {};
 
     // Load hero slides from site_content
-    const { data: heroData } = await supabaseAdmin
+    const { data: heroData } = await supabase
         .from("site_content")
         .select("*")
         .eq("type", "hero_slide")
@@ -21,8 +34,8 @@ export async function GET() {
         ];
     }
 
-    // Load featured products - if none in site_content, load from products table
-    const { data: featuredData } = await supabaseAdmin
+    // Load featured products - uses interleaved multi-category logic (same as homepage getCatchyProducts)
+    const { data: featuredData } = await supabase
         .from("site_content")
         .select("*")
         .eq("type", "featured_product")
@@ -31,19 +44,37 @@ export async function GET() {
     if (featuredData && featuredData.length > 0) {
         results.featuredProducts = featuredData.map((d: any) => ({ ...d.content, id: d.id, is_active: true }));
     } else {
-        // Auto-load from products table
-        const { data: autoFeatured } = await supabaseAdmin
-            .from("products")
-            .select("id, product_name, slug, image_url, selling_price")
-            .eq("is_active", true)
-            .not("image_url", "is", null)
-            .order("selling_price", { ascending: false })
-            .limit(12);
-        results.featuredProducts = (autoFeatured || []).map((p: any) => ({ ...p, is_active: true }));
+        // Interleave from multiple categories (matches homepage Featured Strip logic)
+        const categories = [
+            "COMPUTING ACCESSORIES", "MOBILE & TABLET", "CONSUMER ELECTRONICS",
+            "ENTERPRISE", "ACCESSORIES", "POWER", "APPLE",
+        ];
+        const catResults = await Promise.all(
+            categories.map((cat) =>
+                supabase
+                    .from("products")
+                    .select("id, product_name, slug, image_url, selling_price, category")
+                    .eq("category", cat)
+                    .eq("is_active", true)
+                    .not("image_url", "is", null)
+                    .order("selling_price", { ascending: false })
+                    .limit(2)
+                    .then(({ data }) => data || [])
+            )
+        );
+        // Interleave products from different categories
+        const mixed: any[] = [];
+        const maxLen = Math.max(...catResults.map((r) => r.length), 0);
+        for (let i = 0; i < maxLen; i++) {
+            for (const arr of catResults) {
+                if (arr[i]) mixed.push(arr[i]);
+            }
+        }
+        results.featuredProducts = mixed.slice(0, 14).map((p: any) => ({ ...p, is_active: true }));
     }
 
-    // Load trending - if none in site_content, load from products (most expensive)
-    const { data: trendingData } = await supabaseAdmin
+    // Load trending - if none in site_content, load most expensive products (same as homepage)
+    const { data: trendingData } = await supabase
         .from("site_content")
         .select("*")
         .eq("type", "trending_product")
@@ -52,17 +83,22 @@ export async function GET() {
     if (trendingData && trendingData.length > 0) {
         results.trendingProducts = trendingData.map((d: any) => ({ ...d.content, id: d.id }));
     } else {
-        const { data: autoTrending } = await supabaseAdmin
+        // Get IDs already used in featured to avoid duplicates
+        const featuredIds = (results.featuredProducts || []).map((p: any) => p.id);
+        const { data: autoTrending } = await supabase
             .from("products")
-            .select("id, product_name, slug, image_url, selling_price")
+            .select("id, product_name, slug, image_url, selling_price, category")
             .eq("is_active", true)
+            .not("image_url", "is", null)
             .order("selling_price", { ascending: false })
-            .limit(8);
-        results.trendingProducts = autoTrending || [];
+            .limit(20);
+        // Filter out products already in featured strip
+        const filtered = (autoTrending || []).filter((p: any) => !featuredIds.includes(p.id));
+        results.trendingProducts = filtered.slice(0, 8);
     }
 
     // Load just launched - if none in site_content, load newest
-    const { data: launchedData } = await supabaseAdmin
+    const { data: launchedData } = await supabase
         .from("site_content")
         .select("*")
         .eq("type", "launched_product")
@@ -71,17 +107,18 @@ export async function GET() {
     if (launchedData && launchedData.length > 0) {
         results.launchedProducts = launchedData.map((d: any) => ({ ...d.content, id: d.id }));
     } else {
-        const { data: autoLaunched } = await supabaseAdmin
+        const { data: autoLaunched } = await supabase
             .from("products")
-            .select("id, product_name, slug, image_url, selling_price")
+            .select("id, product_name, slug, image_url, selling_price, category, created_at")
             .eq("is_active", true)
+            .not("image_url", "is", null)
             .order("created_at", { ascending: false })
             .limit(5);
         results.launchedProducts = autoLaunched || [];
     }
 
     // Load config
-    const { data: configData } = await supabaseAdmin
+    const { data: configData } = await supabase
         .from("site_content")
         .select("content")
         .eq("type", "site_config")
@@ -96,16 +133,16 @@ export async function GET() {
 
 // POST - Save content from admin
 export async function POST(req: NextRequest) {
+    const supabase = getSupabaseAdmin();
     const body = await req.json();
     const { heroSlides, featuredProducts, trendingProducts, launchedProducts, config } = body;
 
     try {
         // Save hero slides
         if (heroSlides) {
-            // Delete old hero slides
-            await supabaseAdmin.from("site_content").delete().eq("type", "hero_slide");
+            await supabase.from("site_content").delete().eq("type", "hero_slide");
             for (const slide of heroSlides) {
-                await supabaseAdmin.from("site_content").insert({
+                await supabase.from("site_content").insert({
                     id: slide.id || `slide_${Date.now()}_${Math.random().toString(36).slice(2)}`,
                     type: "hero_slide",
                     content: slide,
@@ -117,9 +154,9 @@ export async function POST(req: NextRequest) {
 
         // Save featured products
         if (featuredProducts) {
-            await supabaseAdmin.from("site_content").delete().eq("type", "featured_product");
+            await supabase.from("site_content").delete().eq("type", "featured_product");
             for (let i = 0; i < featuredProducts.length; i++) {
-                await supabaseAdmin.from("site_content").insert({
+                await supabase.from("site_content").insert({
                     id: `featured_${Date.now()}_${i}`,
                     type: "featured_product",
                     content: featuredProducts[i],
@@ -131,9 +168,9 @@ export async function POST(req: NextRequest) {
 
         // Save trending products
         if (trendingProducts) {
-            await supabaseAdmin.from("site_content").delete().eq("type", "trending_product");
+            await supabase.from("site_content").delete().eq("type", "trending_product");
             for (let i = 0; i < trendingProducts.length; i++) {
-                await supabaseAdmin.from("site_content").insert({
+                await supabase.from("site_content").insert({
                     id: `trending_${Date.now()}_${i}`,
                     type: "trending_product",
                     content: trendingProducts[i],
@@ -145,9 +182,9 @@ export async function POST(req: NextRequest) {
 
         // Save just launched products
         if (launchedProducts) {
-            await supabaseAdmin.from("site_content").delete().eq("type", "launched_product");
+            await supabase.from("site_content").delete().eq("type", "launched_product");
             for (let i = 0; i < launchedProducts.length; i++) {
-                await supabaseAdmin.from("site_content").insert({
+                await supabase.from("site_content").insert({
                     id: `launched_${Date.now()}_${i}`,
                     type: "launched_product",
                     content: launchedProducts[i],
@@ -159,7 +196,7 @@ export async function POST(req: NextRequest) {
 
         // Save config
         if (config) {
-            await supabaseAdmin.from("site_content").upsert({
+            await supabase.from("site_content").upsert({
                 id: "site_config",
                 type: "site_config",
                 content: config,
