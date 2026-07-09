@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import {
     Palette, Image, Type, Save, Plus, Trash2, GripVertical,
-    Eye, EyeOff, Layout, TrendingUp, Rocket, Search
+    Eye, EyeOff, Layout, TrendingUp, Rocket, Search, RefreshCw,
+    ArrowUp, ArrowDown, Replace, Package
 } from "lucide-react";
 
 interface HeroSlide {
@@ -57,6 +58,7 @@ export default function ContentManagerPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<SectionItem[]>([]);
     const [searching, setSearching] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [config, setConfig] = useState<SiteConfig>({
         site_name: "DreamWorks Direct",
         tagline: "Premium Tech & Gadgets",
@@ -70,13 +72,16 @@ export default function ContentManagerPage() {
     });
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [dragItem, setDragItem] = useState<number | null>(null);
 
     useEffect(() => {
         loadContent();
     }, []);
 
     async function loadContent() {
-        // Load hero slides
+        setLoading(true);
+
+        // Load hero slides from site_content
         const { data: heroData } = await supabase
             .from("site_content")
             .select("*")
@@ -92,7 +97,7 @@ export default function ContentManagerPage() {
             ]);
         }
 
-        // Load featured products
+        // Load featured products - if none saved, auto-load from products table
         const { data: featuredData } = await supabase
             .from("site_content")
             .select("*")
@@ -101,9 +106,21 @@ export default function ContentManagerPage() {
 
         if (featuredData && featuredData.length > 0) {
             setFeaturedProducts(featuredData.map((d: any) => ({ ...d.content, id: d.id })));
+        } else {
+            // Auto-load from products table (same logic as homepage getCatchyProducts)
+            const { data: autoFeatured } = await supabase
+                .from("products")
+                .select("id, product_name, slug, image_url, selling_price")
+                .eq("is_active", true)
+                .not("image_url", "is", null)
+                .order("selling_price", { ascending: false })
+                .limit(12);
+            if (autoFeatured) {
+                setFeaturedProducts(autoFeatured.map((p: any) => ({ ...p, is_active: true })));
+            }
         }
 
-        // Load trending
+        // Load trending - if none saved, auto-load from products (most expensive)
         const { data: trendingData } = await supabase
             .from("site_content")
             .select("*")
@@ -112,9 +129,19 @@ export default function ContentManagerPage() {
 
         if (trendingData && trendingData.length > 0) {
             setTrendingProducts(trendingData.map((d: any) => ({ ...d.content, id: d.id })));
+        } else {
+            const { data: autoTrending } = await supabase
+                .from("products")
+                .select("id, product_name, slug, image_url, selling_price")
+                .eq("is_active", true)
+                .order("selling_price", { ascending: false })
+                .limit(8);
+            if (autoTrending) {
+                setTrendingProducts(autoTrending);
+            }
         }
 
-        // Load just launched
+        // Load just launched - if none saved, auto-load newest
         const { data: launchedData } = await supabase
             .from("site_content")
             .select("*")
@@ -123,6 +150,16 @@ export default function ContentManagerPage() {
 
         if (launchedData && launchedData.length > 0) {
             setLaunchedProducts(launchedData.map((d: any) => ({ ...d.content, id: d.id })));
+        } else {
+            const { data: autoLaunched } = await supabase
+                .from("products")
+                .select("id, product_name, slug, image_url, selling_price")
+                .eq("is_active", true)
+                .order("created_at", { ascending: false })
+                .limit(5);
+            if (autoLaunched) {
+                setLaunchedProducts(autoLaunched);
+            }
         }
 
         // Load config
@@ -135,6 +172,8 @@ export default function ContentManagerPage() {
         if (configData) {
             setConfig(configData.content as SiteConfig);
         }
+
+        setLoading(false);
     }
 
     async function searchProducts() {
@@ -258,14 +297,57 @@ export default function ContentManagerPage() {
         }
     }
 
-    function updateSectionItem(id: string, section: "featured" | "trending" | "launched", field: string, value: any) {
-        if (section === "featured") {
-            setFeaturedProducts(featuredProducts.map((p) => p.id === id ? { ...p, [field]: value } : p));
-        } else if (section === "trending") {
-            setTrendingProducts(trendingProducts.map((p) => p.id === id ? { ...p, [field]: value } : p));
-        } else {
-            setLaunchedProducts(launchedProducts.map((p) => p.id === id ? { ...p, [field]: value } : p));
-        }
+    function moveItem(index: number, direction: "up" | "down", section: "featured" | "trending" | "launched") {
+        const getItems = () => {
+            if (section === "featured") return [...featuredProducts];
+            if (section === "trending") return [...trendingProducts];
+            return [...launchedProducts];
+        };
+        const setItems = (items: any[]) => {
+            if (section === "featured") setFeaturedProducts(items);
+            else if (section === "trending") setTrendingProducts(items);
+            else setLaunchedProducts(items);
+        };
+
+        const items = getItems();
+        const newIndex = direction === "up" ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= items.length) return;
+
+        const temp = items[index];
+        items[index] = items[newIndex];
+        items[newIndex] = temp;
+        setItems(items);
+    }
+
+    function handleDragStart(index: number) {
+        setDragItem(index);
+    }
+
+    function handleDragOver(e: React.DragEvent, index: number, section: "featured" | "trending" | "launched") {
+        e.preventDefault();
+        if (dragItem === null || dragItem === index) return;
+
+        const getItems = () => {
+            if (section === "featured") return [...featuredProducts];
+            if (section === "trending") return [...trendingProducts];
+            return [...launchedProducts];
+        };
+        const setItems = (items: any[]) => {
+            if (section === "featured") setFeaturedProducts(items);
+            else if (section === "trending") setTrendingProducts(items);
+            else setLaunchedProducts(items);
+        };
+
+        const items = getItems();
+        const draggedItem = items[dragItem];
+        items.splice(dragItem, 1);
+        items.splice(index, 0, draggedItem);
+        setItems(items);
+        setDragItem(index);
+    }
+
+    function handleDragEnd() {
+        setDragItem(null);
     }
 
     const tabs = [
@@ -276,12 +358,21 @@ export default function ContentManagerPage() {
         { id: "config", label: "Site Config", icon: Palette },
     ];
 
-    // Product search + list component for sections
+    function formatPrice(price: number) {
+        return "₦" + (price || 0).toLocaleString();
+    }
+
+    // Product section editor with visual cards, drag-drop, and inline editing
     function ProductSectionEditor({ items, section, title, description }: { items: (SectionItem | FeaturedProduct)[]; section: "featured" | "trending" | "launched"; title: string; description: string }) {
         return (
             <div className="space-y-5">
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-                    <h3 className="font-bold text-gray-900 mb-1">{title}</h3>
+                    <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-bold text-gray-900">{title}</h3>
+                        <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+                            {items.length} items
+                        </span>
+                    </div>
                     <p className="text-sm text-gray-500 mb-5">{description}</p>
 
                     {/* Search to add products */}
@@ -305,20 +396,23 @@ export default function ContentManagerPage() {
                         </button>
                     </div>
 
-                    {/* Search results */}
+                    {/* Search results dropdown */}
                     {searchResults.length > 0 && (
-                        <div className="border border-blue-100 rounded-xl mb-5 max-h-[200px] overflow-y-auto">
+                        <div className="border border-blue-100 rounded-xl mb-5 max-h-[200px] overflow-y-auto bg-white shadow-lg">
                             {searchResults.map((product) => (
                                 <div key={product.id} className="flex items-center justify-between p-3 hover:bg-blue-50 border-b border-gray-50 last:border-0">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100">
-                                            <img src={product.image_url} alt="" className="w-full h-full object-cover" />
+                                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                            {product.image_url && <img src={product.image_url} alt="" className="w-full h-full object-cover" />}
                                         </div>
-                                        <span className="text-sm font-medium text-gray-800 line-clamp-1">{product.product_name}</span>
+                                        <div>
+                                            <span className="text-sm font-medium text-gray-800 line-clamp-1">{product.product_name}</span>
+                                            <span className="text-xs text-gray-400 block">{formatPrice(product.selling_price)}</span>
+                                        </div>
                                     </div>
                                     <button
                                         onClick={() => addToSection(product, section)}
-                                        className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
+                                        className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors flex-shrink-0"
                                     >
                                         + Add
                                     </button>
@@ -327,85 +421,112 @@ export default function ContentManagerPage() {
                         </div>
                     )}
 
-                    {/* Current items - with inline editing */}
-                    <div className="space-y-3">
-                        {items.length === 0 ? (
-                            <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
-                                <p className="text-sm text-gray-400">No products added yet. Search and add products above.</p>
-                            </div>
-                        ) : (
-                            items.map((item, index) => (
-                                <div key={item.id} className="bg-gray-50 rounded-xl p-4 hover:bg-blue-50/30 transition-colors border border-gray-100">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center gap-2">
-                                            <GripVertical size={14} className="text-gray-300 cursor-grab" />
-                                            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">#{index + 1}</span>
-                                            {'is_active' in item && (
-                                                <button
-                                                    onClick={() => updateSectionItem(item.id, section, 'is_active', !(item as FeaturedProduct).is_active)}
-                                                    className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full transition-colors ${(item as FeaturedProduct).is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-500'}`}
-                                                >
-                                                    {(item as FeaturedProduct).is_active ? <Eye size={10} /> : <EyeOff size={10} />}
-                                                    {(item as FeaturedProduct).is_active ? 'Live' : 'Hidden'}
-                                                </button>
-                                            )}
-                                        </div>
+                    {/* Current items - visual grid with drag-drop */}
+                    {items.length === 0 ? (
+                        <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl">
+                            <Package size={32} className="mx-auto text-gray-300 mb-3" />
+                            <p className="text-sm text-gray-400 font-medium">No products in this section yet.</p>
+                            <p className="text-xs text-gray-300 mt-1">Search and add products above, or they&apos;ll auto-populate from your catalog.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {items.map((item, index) => (
+                                <div
+                                    key={item.id}
+                                    draggable
+                                    onDragStart={() => handleDragStart(index)}
+                                    onDragOver={(e) => handleDragOver(e, index, section)}
+                                    onDragEnd={handleDragEnd}
+                                    className={`relative bg-white rounded-xl border transition-all cursor-grab active:cursor-grabbing ${dragItem === index ? "border-blue-400 shadow-lg scale-[1.02] opacity-80" : "border-gray-100 hover:border-blue-200 hover:shadow-md"}`}
+                                >
+                                    {/* Position badge */}
+                                    <div className="absolute top-2 left-2 z-10 bg-gray-900/80 text-white text-[10px] font-black w-6 h-6 rounded-lg flex items-center justify-center">
+                                        #{index + 1}
+                                    </div>
+
+                                    {/* Move buttons */}
+                                    <div className="absolute top-2 right-2 z-10 flex gap-1">
+                                        <button
+                                            onClick={() => moveItem(index, "up", section)}
+                                            disabled={index === 0}
+                                            className="w-6 h-6 bg-white/90 border border-gray-200 rounded-md flex items-center justify-center hover:bg-blue-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                                        >
+                                            <ArrowUp size={10} />
+                                        </button>
+                                        <button
+                                            onClick={() => moveItem(index, "down", section)}
+                                            disabled={index === items.length - 1}
+                                            className="w-6 h-6 bg-white/90 border border-gray-200 rounded-md flex items-center justify-center hover:bg-blue-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                                        >
+                                            <ArrowDown size={10} />
+                                        </button>
                                         <button
                                             onClick={() => removeFromSection(item.id, section)}
-                                            className="text-red-400 hover:text-red-600 transition-colors p-1 rounded-lg hover:bg-red-50"
+                                            className="w-6 h-6 bg-red-50 border border-red-200 rounded-md flex items-center justify-center hover:bg-red-100 text-red-500"
                                         >
-                                            <Trash2 size={14} />
+                                            <Trash2 size={10} />
                                         </button>
                                     </div>
-                                    <div className="flex gap-4">
-                                        {/* Image preview + URL edit */}
-                                        <div className="flex-shrink-0">
-                                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-200 mb-1.5">
-                                                <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+
+                                    {/* Product image */}
+                                    <div className="h-32 bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-t-xl overflow-hidden flex items-center justify-center p-3">
+                                        {item.image_url ? (
+                                            <img src={item.image_url} alt={item.product_name} className="max-h-full max-w-full object-contain" />
+                                        ) : (
+                                            <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                                                <Package size={24} className="text-gray-400" />
                                             </div>
-                                            <input
-                                                value={item.image_url}
-                                                onChange={(e) => updateSectionItem(item.id, section, 'image_url', e.target.value)}
-                                                placeholder="Image URL"
-                                                className="w-16 text-[10px] text-gray-400 border-0 bg-transparent p-0 focus:outline-none truncate"
-                                                title={item.image_url}
-                                            />
+                                        )}
+                                    </div>
+
+                                    {/* Product info */}
+                                    <div className="p-3 border-t border-gray-50">
+                                        <p className="text-xs font-bold text-gray-900 line-clamp-2 leading-tight min-h-[32px]">
+                                            {item.product_name}
+                                        </p>
+                                        <div className="flex items-center justify-between mt-2">
+                                            <span className="text-sm font-bold text-blue-700">{formatPrice(item.selling_price)}</span>
+                                            <span className="text-[10px] text-gray-400 font-medium">{item.slug?.slice(0, 15)}...</span>
                                         </div>
-                                        {/* Editable fields */}
-                                        <div className="flex-1 space-y-2">
-                                            <div>
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase">Product Name</label>
-                                                <input
-                                                    value={item.product_name}
-                                                    onChange={(e) => updateSectionItem(item.id, section, 'product_name', e.target.value)}
-                                                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                />
+                                        {'is_active' in item && (
+                                            <div className="mt-2">
+                                                <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${(item as FeaturedProduct).is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                    {(item as FeaturedProduct).is_active ? <Eye size={8} /> : <EyeOff size={8} />}
+                                                    {(item as FeaturedProduct).is_active ? 'Live' : 'Hidden'}
+                                                </span>
                                             </div>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div>
-                                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Slug</label>
-                                                    <input
-                                                        value={item.slug}
-                                                        onChange={(e) => updateSectionItem(item.id, section, 'slug', e.target.value)}
-                                                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Price (₦)</label>
-                                                    <input
-                                                        type="number"
-                                                        value={item.selling_price}
-                                                        onChange={(e) => updateSectionItem(item.id, section, 'selling_price', Number(e.target.value))}
-                                                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
+                                        )}
+                                    </div>
+
+                                    {/* Drag handle indicator */}
+                                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5 opacity-30">
+                                        <div className="w-1 h-1 rounded-full bg-gray-400" />
+                                        <div className="w-1 h-1 rounded-full bg-gray-400" />
+                                        <div className="w-1 h-1 rounded-full bg-gray-400" />
                                     </div>
                                 </div>
-                            ))
-                        )}
-                    </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Info bar */}
+                    {items.length > 0 && (
+                        <div className="mt-4 flex items-center gap-2 text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2">
+                            <GripVertical size={12} />
+                            <span>Drag cards to reorder • Use arrows to move • Click trash to remove</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <div className="text-center">
+                    <RefreshCw size={24} className="mx-auto text-blue-500 animate-spin mb-3" />
+                    <p className="text-sm text-gray-500">Loading content...</p>
                 </div>
             </div>
         );
@@ -524,7 +645,7 @@ export default function ContentManagerPage() {
                     items={featuredProducts}
                     section="featured"
                     title="Featured Products Strip"
-                    description="These products display in the scrolling strip below the hero. If empty, the system auto-selects from your catalog."
+                    description="These products display in the scrolling strip below the hero. Drag to reorder, remove what you don't want, or search to add new ones."
                 />
             )}
 
@@ -534,7 +655,7 @@ export default function ContentManagerPage() {
                     items={trendingProducts}
                     section="trending"
                     title="Trending Now Section"
-                    description="Products shown in the Trending Now section. If empty, the system auto-selects based on recent sales."
+                    description="Products shown in the Trending Now carousel. Drag to reorder priority. If you remove all, the system auto-selects based on price."
                 />
             )}
 
@@ -544,7 +665,7 @@ export default function ContentManagerPage() {
                     items={launchedProducts}
                     section="launched"
                     title="Just Launched Section"
-                    description="Products shown in the Just Launched section. If empty, the system shows the newest products."
+                    description="Products shown in the Just Launched section. Drag to reorder. If empty, the system shows the newest products."
                 />
             )}
 

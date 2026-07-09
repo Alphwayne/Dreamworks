@@ -13,7 +13,10 @@ export async function GET(req: NextRequest) {
         .is("parent_id", null)
         .order("created_at", { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+        console.error("blog_comments GET error:", error.message);
+        return NextResponse.json({ comments: [], _error: error.message, _hint: "Table blog_comments may not exist. Create it in Supabase SQL editor." });
+    }
 
     // Fetch replies for each comment
     const commentIds = (data || []).map((c: any) => c.id);
@@ -59,6 +62,9 @@ export async function POST(req: NextRequest) {
         .select()
         .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+        console.error("blog_comments POST error:", error.message);
+        return NextResponse.json({ error: error.message, _hint: "Table blog_comments may not exist. Create it in Supabase SQL editor." }, { status: 500 });
+    }
     return NextResponse.json({ comment: data });
 }

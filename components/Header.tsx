@@ -206,7 +206,7 @@ export function Header() {
     };
 
     return (
-        <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-50/90 via-white/95 to-blue-50/90 backdrop-blur-xl border-b border-blue-100/30 shadow-sm" style={{ overflow: "hidden", WebkitOverflowScrolling: "touch", maxWidth: "100vw" }}>
+        <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-50/90 via-white/95 to-blue-50/90 backdrop-blur-xl border-b border-blue-100/30 shadow-sm overflow-x-hidden lg:overflow-visible" style={{ maxWidth: "100vw" }}>
             <div className="max-w-7xl mx-auto px-3 sm:px-4">
                 <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
                     <Link href="/" className="shrink-0 group">
