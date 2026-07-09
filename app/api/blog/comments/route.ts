@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-server";
 
 // GET - fetch comments for a blog post
 export async function GET(req: NextRequest) {
     const slug = req.nextUrl.searchParams.get("slug");
     if (!slug) return NextResponse.json({ error: "slug required" }, { status: 400 });
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
         .from("blog_comments")
         .select("*")
         .eq("post_slug", slug)
@@ -15,14 +15,14 @@ export async function GET(req: NextRequest) {
 
     if (error) {
         console.error("blog_comments GET error:", error.message);
-        return NextResponse.json({ comments: [], _error: error.message, _hint: "Table blog_comments may not exist. Create it in Supabase SQL editor." });
+        return NextResponse.json({ comments: [], _error: error.message });
     }
 
     // Fetch replies for each comment
     const commentIds = (data || []).map((c: any) => c.id);
     let replies: any[] = [];
     if (commentIds.length > 0) {
-        const { data: replyData } = await supabase
+        const { data: replyData } = await supabaseAdmin
             .from("blog_comments")
             .select("*")
             .in("parent_id", commentIds)
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "post_slug and content required" }, { status: 400 });
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
         .from("blog_comments")
         .insert({
             post_slug,
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
         console.error("blog_comments POST error:", error.message);
-        return NextResponse.json({ error: error.message, _hint: "Table blog_comments may not exist. Create it in Supabase SQL editor." }, { status: 500 });
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
     return NextResponse.json({ comment: data });
 }

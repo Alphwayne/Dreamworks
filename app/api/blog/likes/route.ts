@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-server";
 
 // GET - get likes count for a post or comment
 export async function GET(req: NextRequest) {
@@ -7,14 +7,13 @@ export async function GET(req: NextRequest) {
     const commentId = req.nextUrl.searchParams.get("comment_id");
 
     if (slug) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from("blog_likes")
             .select("id", { count: "exact" })
             .eq("post_slug", slug)
             .is("comment_id", null);
 
         if (error) {
-            // Table might not exist - return 0 likes gracefully
             console.error("blog_likes GET error:", error.message);
             return NextResponse.json({ likes: 0, _error: error.message });
         }
@@ -22,7 +21,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (commentId) {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from("blog_likes")
             .select("id", { count: "exact" })
             .eq("comment_id", commentId);
@@ -47,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if already liked
-    let query = supabase
+    let query = supabaseAdmin
         .from("blog_likes")
         .select("id")
         .eq("visitor_id", visitor_id);
@@ -64,26 +63,26 @@ export async function POST(req: NextRequest) {
 
     if (queryError) {
         console.error("blog_likes query error:", queryError.message);
-        return NextResponse.json({ error: queryError.message, action: "error", _hint: "Table blog_likes may not exist. Visit /api/setup to check." }, { status: 500 });
+        return NextResponse.json({ error: queryError.message, action: "error" }, { status: 500 });
     }
 
     if (existing && existing.length > 0) {
         // Unlike - remove the like
-        const { error: delError } = await supabase.from("blog_likes").delete().eq("id", existing[0].id);
+        const { error: delError } = await supabaseAdmin.from("blog_likes").delete().eq("id", existing[0].id);
         if (delError) {
             return NextResponse.json({ error: delError.message, action: "error" }, { status: 500 });
         }
         return NextResponse.json({ action: "unliked" });
     } else {
         // Like - add the like
-        const { error: insError } = await supabase.from("blog_likes").insert({
+        const { error: insError } = await supabaseAdmin.from("blog_likes").insert({
             post_slug: post_slug || null,
             comment_id: comment_id || null,
             visitor_id,
             created_at: new Date().toISOString(),
         });
         if (insError) {
-            return NextResponse.json({ error: insError.message, action: "error", _hint: "Table blog_likes may not exist. Visit /api/setup to check." }, { status: 500 });
+            return NextResponse.json({ error: insError.message, action: "error" }, { status: 500 });
         }
         return NextResponse.json({ action: "liked" });
     }

@@ -141,8 +141,13 @@ const rollingMessages = [
 export function Header() {
     const router = useRouter();
     const { getTotalPrice, getTotalItems, openCart } = useCartStore();
-    const totalItems = getTotalItems();
-    const totalPrice = getTotalPrice();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => { setMounted(true); }, []);
+
+    // Only read cart values after mount to avoid hydration mismatch
+    const totalItems = mounted ? getTotalItems() : 0;
+    const totalPrice = mounted ? getTotalPrice() : 0;
 
     const [isLoggedIn] = useState(false);
     const [isHovering, setIsHovering] = useState(false);

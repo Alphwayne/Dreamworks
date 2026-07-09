@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/lib/supabase";
 import {
     Palette, Image, Type, Save, Plus, Trash2, GripVertical,
     Eye, EyeOff, Layout, TrendingUp, Rocket, Search, RefreshCw,
@@ -80,175 +79,61 @@ export default function ContentManagerPage() {
 
     async function loadContent() {
         setLoading(true);
+        try {
+            const res = await fetch("/api/admin/content");
+            const data = await res.json();
 
-        // Load hero slides from site_content
-        const { data: heroData } = await supabase
-            .from("site_content")
-            .select("*")
-            .eq("type", "hero_slide")
-            .order("order", { ascending: true });
-
-        if (heroData && heroData.length > 0) {
-            setHeroSlides(heroData.map((d: any) => ({ ...d.content, id: d.id })));
-        } else {
-            setHeroSlides([
-                { id: "1", title: "Oraimo Smart Accessories", subtitle: "Smart Life. Simplified.", cta_text: "Shop Oraimo", cta_link: "/brands/oraimo", bg_image: "/dw-oraimo.png", bg_video: "", is_active: true, order: 1 },
-                { id: "2", title: "Samsung Galaxy Z Fold7", subtitle: "Unfold the future", cta_text: "Shop Samsung", cta_link: "/brands/samsung", bg_image: "", bg_video: "/Galaxy-Z-Fold7_Home_Hero_PC_1920x1080_LTR.mp4", is_active: true, order: 2 },
-            ]);
+            if (data.heroSlides) setHeroSlides(data.heroSlides);
+            if (data.featuredProducts) setFeaturedProducts(data.featuredProducts);
+            if (data.trendingProducts) setTrendingProducts(data.trendingProducts);
+            if (data.launchedProducts) setLaunchedProducts(data.launchedProducts);
+            if (data.config) setConfig(data.config);
+        } catch (err) {
+            console.error("Failed to load content:", err);
         }
-
-        // Load featured products - if none saved, auto-load from products table
-        const { data: featuredData } = await supabase
-            .from("site_content")
-            .select("*")
-            .eq("type", "featured_product")
-            .order("order", { ascending: true });
-
-        if (featuredData && featuredData.length > 0) {
-            setFeaturedProducts(featuredData.map((d: any) => ({ ...d.content, id: d.id })));
-        } else {
-            // Auto-load from products table (same logic as homepage getCatchyProducts)
-            const { data: autoFeatured } = await supabase
-                .from("products")
-                .select("id, product_name, slug, image_url, selling_price")
-                .eq("is_active", true)
-                .not("image_url", "is", null)
-                .order("selling_price", { ascending: false })
-                .limit(12);
-            if (autoFeatured) {
-                setFeaturedProducts(autoFeatured.map((p: any) => ({ ...p, is_active: true })));
-            }
-        }
-
-        // Load trending - if none saved, auto-load from products (most expensive)
-        const { data: trendingData } = await supabase
-            .from("site_content")
-            .select("*")
-            .eq("type", "trending_product")
-            .order("order", { ascending: true });
-
-        if (trendingData && trendingData.length > 0) {
-            setTrendingProducts(trendingData.map((d: any) => ({ ...d.content, id: d.id })));
-        } else {
-            const { data: autoTrending } = await supabase
-                .from("products")
-                .select("id, product_name, slug, image_url, selling_price")
-                .eq("is_active", true)
-                .order("selling_price", { ascending: false })
-                .limit(8);
-            if (autoTrending) {
-                setTrendingProducts(autoTrending);
-            }
-        }
-
-        // Load just launched - if none saved, auto-load newest
-        const { data: launchedData } = await supabase
-            .from("site_content")
-            .select("*")
-            .eq("type", "launched_product")
-            .order("order", { ascending: true });
-
-        if (launchedData && launchedData.length > 0) {
-            setLaunchedProducts(launchedData.map((d: any) => ({ ...d.content, id: d.id })));
-        } else {
-            const { data: autoLaunched } = await supabase
-                .from("products")
-                .select("id, product_name, slug, image_url, selling_price")
-                .eq("is_active", true)
-                .order("created_at", { ascending: false })
-                .limit(5);
-            if (autoLaunched) {
-                setLaunchedProducts(autoLaunched);
-            }
-        }
-
-        // Load config
-        const { data: configData } = await supabase
-            .from("site_content")
-            .select("content")
-            .eq("type", "site_config")
-            .single();
-
-        if (configData) {
-            setConfig(configData.content as SiteConfig);
-        }
-
         setLoading(false);
     }
 
     async function searchProducts() {
         if (!searchQuery.trim()) return;
         setSearching(true);
-        const { data } = await supabase
-            .from("products")
-            .select("id, product_name, slug, image_url, selling_price")
-            .ilike("product_name", `%${searchQuery}%`)
-            .limit(10);
-        setSearchResults(data || []);
+        try {
+            const res = await fetch(`/api/admin/content/search?q=${encodeURIComponent(searchQuery)}`);
+            const data = await res.json();
+            setSearchResults(data.products || []);
+        } catch (err) {
+            console.error("Search failed:", err);
+            setSearchResults([]);
+        }
         setSearching(false);
     }
 
     async function saveContent() {
         setSaving(true);
-
-        // Save hero slides
-        for (const slide of heroSlides) {
-            await supabase.from("site_content").upsert({
-                id: slide.id,
-                type: "hero_slide",
-                content: slide,
-                order: slide.order,
-                updated_at: new Date().toISOString(),
+        try {
+            const res = await fetch("/api/admin/content", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    heroSlides,
+                    featuredProducts,
+                    trendingProducts,
+                    launchedProducts,
+                    config,
+                }),
             });
+            const data = await res.json();
+            if (data.success) {
+                setSaved(true);
+                setTimeout(() => setSaved(false), 3000);
+            } else {
+                alert("Save failed: " + (data.error || "Unknown error"));
+            }
+        } catch (err) {
+            console.error("Save failed:", err);
+            alert("Save failed. Check console for details.");
         }
-
-        // Save featured products
-        await supabase.from("site_content").delete().eq("type", "featured_product");
-        for (let i = 0; i < featuredProducts.length; i++) {
-            await supabase.from("site_content").insert({
-                id: `featured_${Date.now()}_${i}`,
-                type: "featured_product",
-                content: featuredProducts[i],
-                order: i,
-                updated_at: new Date().toISOString(),
-            });
-        }
-
-        // Save trending products
-        await supabase.from("site_content").delete().eq("type", "trending_product");
-        for (let i = 0; i < trendingProducts.length; i++) {
-            await supabase.from("site_content").insert({
-                id: `trending_${Date.now()}_${i}`,
-                type: "trending_product",
-                content: trendingProducts[i],
-                order: i,
-                updated_at: new Date().toISOString(),
-            });
-        }
-
-        // Save just launched products
-        await supabase.from("site_content").delete().eq("type", "launched_product");
-        for (let i = 0; i < launchedProducts.length; i++) {
-            await supabase.from("site_content").insert({
-                id: `launched_${Date.now()}_${i}`,
-                type: "launched_product",
-                content: launchedProducts[i],
-                order: i,
-                updated_at: new Date().toISOString(),
-            });
-        }
-
-        // Save config
-        await supabase.from("site_content").upsert({
-            id: "site_config",
-            type: "site_config",
-            content: config,
-            updated_at: new Date().toISOString(),
-        });
-
         setSaving(false);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
     }
 
     function addHeroSlide() {
