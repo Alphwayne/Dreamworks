@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Package, Plus, Check, ShoppingCart, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -26,6 +26,24 @@ interface SetupBundle {
 export function CompleteYourSetup({ bundles }: { bundles: SetupBundle[] }) {
     const [activeBundle, setActiveBundle] = useState(0);
     const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+    const tabsRef = useRef<HTMLDivElement>(null);
+
+    // Mobile hint: briefly scroll tabs to show more exist, then scroll back
+    useEffect(() => {
+        const el = tabsRef.current;
+        if (!el) return;
+        // Only run on small screens
+        if (window.innerWidth >= 768) return;
+
+        const timeout = setTimeout(() => {
+            el.scrollTo({ left: 60, behavior: "smooth" });
+            setTimeout(() => {
+                el.scrollTo({ left: 0, behavior: "smooth" });
+            }, 600);
+        }, 1200);
+
+        return () => clearTimeout(timeout);
+    }, []);
 
     if (!bundles.length) return null;
 
@@ -60,7 +78,7 @@ export function CompleteYourSetup({ bundles }: { bundles: SetupBundle[] }) {
             </div>
 
             {/* Bundle tabs */}
-            <div className="flex gap-2 mt-5 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+            <div ref={tabsRef} className="flex gap-2 mt-5 mb-6 overflow-x-auto pb-2 scrollbar-hide">
                 {bundles.map((bundle, i) => (
                     <button
                         key={i}

@@ -69,6 +69,8 @@ export function TrendingNow({ products }: { products: TrendingProduct[] }) {
                 className="relative overflow-hidden rounded-2xl"
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
+                onTouchStart={() => setIsPaused(true)}
+                onTouchEnd={() => setTimeout(() => setIsPaused(false), 2000)}
             >
                 {/* Subtle fade edges */}
                 <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white/60 to-transparent z-10 pointer-events-none" />

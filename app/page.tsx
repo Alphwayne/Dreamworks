@@ -333,7 +333,7 @@ export default async function Home() {
                   Get the tech you love.<br />
                   <span className="text-blue-200">Pay in instalments.</span>
                 </h2>
-                <p className="text-blue-200/70 max-w-sm mx-auto md:mx-0">
+                <p className="text-blue-200/70 max-w-sm mx-auto md:mx-0 hidden sm:block">
                   Flexible payment options on all products. No hidden charges.
                 </p>
               </div>
@@ -356,7 +356,7 @@ export default async function Home() {
                   </div>
                   <div>
                     <p className="text-white text-sm font-bold leading-tight">{pt.label}</p>
-                    <p className="text-blue-200/70 text-xs leading-tight mt-0.5">{pt.sub}</p>
+                    <p className="text-blue-200/70 text-xs leading-tight mt-0.5 hidden sm:block">{pt.sub}</p>
                   </div>
                 </div>
               ))}
@@ -499,12 +499,12 @@ export default async function Home() {
                 <p className="text-blue-200/60 text-xs leading-relaxed mb-4">
                   Your trusted destination for premium tech products since 2004.
                 </p>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-start">
                   {SOCIAL_LINKS.map((social) => (
                     <a key={social.name} href={social.href} target="_blank" rel="noopener noreferrer"
-                      className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform hover:scale-110"
+                      className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-transform hover:scale-110"
                       style={{ background: typeof social.bg === "string" && social.bg.includes("gradient") ? social.bg : social.bg }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg className="w-4 h-4 sm:w-3.5 sm:h-3.5" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d={social.svgPath} />
                       </svg>
                     </a>
@@ -566,9 +566,9 @@ export default async function Home() {
               <div>
                 <h4 className="text-white text-xs font-bold uppercase tracking-widest mb-4">Stay Updated</h4>
                 <p className="text-blue-200/60 text-xs mb-3">Get the latest deals and tech news.</p>
-                <div className="flex gap-2">
-                  <input type="email" placeholder="Your email" className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2.5 rounded-xl text-xs font-bold transition-colors">→</button>
+                <div className="flex gap-2 w-full">
+                  <input type="email" placeholder="Your email" className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2.5 rounded-xl text-xs font-bold transition-colors flex-shrink-0">→</button>
                 </div>
               </div>
             </div>

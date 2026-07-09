@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
 const BRANDS = [
     { name: "HP", slug: "hp", border: "rgba(0,150,214,0.20)", glow: "rgba(0,150,214,0.12)", svg: <svg viewBox="0 0 48 48" className="w-8 h-8" fill="none"><text x="4" y="36" fontSize="28" fontWeight="900" fill="#0096D6" fontFamily="Arial">hp</text></svg> },
@@ -16,6 +17,90 @@ const BRANDS = [
     { name: "Lenovo", slug: "lenovo", border: "rgba(226,35,26,0.18)", glow: "rgba(226,35,26,0.10)", svg: <svg viewBox="0 0 80 20" className="w-16 h-5" fill="none"><text x="0" y="15" fontSize="14" fontWeight="800" fill="#E2231A" fontFamily="Arial" letterSpacing="0.5">Lenovo</text></svg> },
     { name: "Hikvision", slug: "hikvision", border: "rgba(204,0,0,0.16)", glow: "rgba(204,0,0,0.09)", svg: <svg viewBox="0 0 90 18" className="w-20 h-5" fill="none"><text x="0" y="14" fontSize="12" fontWeight="800" fill="#CC0000" fontFamily="Arial" letterSpacing="0.3">HIKVISION</text></svg> },
 ];
+
+function BrandCard({ brand }: { brand: typeof BRANDS[number] }) {
+    return (
+        <Link
+            href={`/collections/all?brand=${brand.slug}`}
+            className="group relative flex flex-col items-center justify-center gap-3 rounded-2xl py-5 px-3 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden"
+            style={{
+                background: "linear-gradient(135deg, rgba(255,255,255,0.82) 0%, rgba(240,246,255,0.75) 100%)",
+                border: `1px solid ${brand.border}`,
+                boxShadow: "0 2px 14px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.9)",
+                backdropFilter: "blur(10px)",
+            }}
+        >
+            {/* Brand accent flood on hover */}
+            <div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl"
+                style={{ background: `linear-gradient(135deg, ${brand.glow} 0%, transparent 70%)` }}
+            />
+            {/* Shimmer sweep */}
+            <div
+                className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100"
+                style={{ background: "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.45) 50%, transparent 70%)", animation: "shimmer 1.2s ease-in-out infinite" }}
+            />
+            <div className="flex items-center justify-center h-10 transition-all duration-300 group-hover:scale-110 relative z-10">
+                {brand.svg}
+            </div>
+            <span className="text-[10px] font-semibold text-slate-400 group-hover:text-slate-700 transition-colors uppercase tracking-widest relative z-10">
+                {brand.name}
+            </span>
+        </Link>
+    );
+}
+
+function MobileCarousel() {
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const [isPaused, setIsPaused] = useState(false);
+    const animRef = useRef<number>(0);
+    const speedRef = useRef(0.5);
+
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+
+        const animate = () => {
+            if (!isPaused && el) {
+                el.scrollLeft += speedRef.current;
+                // Reset to start when we've scrolled through the first set
+                if (el.scrollLeft >= el.scrollWidth / 2) {
+                    el.scrollLeft = 0;
+                }
+            }
+            animRef.current = requestAnimationFrame(animate);
+        };
+
+        animRef.current = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(animRef.current);
+    }, [isPaused]);
+
+    // Duplicate brands for seamless loop
+    const items = [...BRANDS, ...BRANDS];
+
+    return (
+        <div
+            className="relative overflow-hidden md:hidden"
+            onTouchStart={() => setIsPaused(true)}
+            onTouchEnd={() => setTimeout(() => setIsPaused(false), 2000)}
+        >
+            <div
+                ref={scrollRef}
+                className="flex gap-3 overflow-x-hidden py-1"
+            >
+                {items.map((brand, i) => (
+                    <div
+                        key={`${brand.name}-${i}`}
+                        className="flex-shrink-0"
+                        style={{ width: "calc((100% - 1.5rem) / 3)" }}
+                    >
+                        <BrandCard brand={brand} />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
 
 export function BrandStrip() {
     return (
@@ -45,37 +130,13 @@ export function BrandStrip() {
                     </Link>
                 </div>
 
-                {/* Brand cards */}
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                {/* Mobile: auto-scrolling carousel (3 per view) */}
+                <MobileCarousel />
+
+                {/* Desktop: grid layout (hidden on mobile) */}
+                <div className="hidden md:grid grid-cols-4 md:grid-cols-6 gap-3">
                     {BRANDS.map((brand) => (
-                        <Link
-                            key={brand.name}
-                            href={`/collections/all?brand=${brand.slug}`}
-                            className="group relative flex flex-col items-center justify-center gap-3 rounded-2xl py-5 px-3 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden"
-                            style={{
-                                background: "linear-gradient(135deg, rgba(255,255,255,0.82) 0%, rgba(240,246,255,0.75) 100%)",
-                                border: `1px solid ${brand.border}`,
-                                boxShadow: "0 2px 14px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.9)",
-                                backdropFilter: "blur(10px)",
-                            }}
-                        >
-                            {/* Brand accent flood on hover */}
-                            <div
-                                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl"
-                                style={{ background: `linear-gradient(135deg, ${brand.glow} 0%, transparent 70%)` }}
-                            />
-                            {/* Shimmer sweep */}
-                            <div
-                                className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100"
-                                style={{ background: "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.45) 50%, transparent 70%)", animation: "shimmer 1.2s ease-in-out infinite" }}
-                            />
-                            <div className="flex items-center justify-center h-10 transition-all duration-300 group-hover:scale-110 relative z-10">
-                                {brand.svg}
-                            </div>
-                            <span className="text-[10px] font-semibold text-slate-400 group-hover:text-slate-700 transition-colors uppercase tracking-widest relative z-10">
-                                {brand.name}
-                            </span>
-                        </Link>
+                        <BrandCard key={brand.name} brand={brand} />
                     ))}
                 </div>
 

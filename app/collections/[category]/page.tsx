@@ -194,14 +194,14 @@ export default function CollectionPage() {
                 {/* Hero Section */}
                 <div className={`relative overflow-hidden bg-gradient-to-br ${gradient}`}>
                     <div className="absolute inset-0">
-                        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
-                        <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl hidden sm:block" />
+                        <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl hidden sm:block" />
                     </div>
 
                     <div className="relative max-w-7xl mx-auto px-4 py-14 md:py-20">
-                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                            <div>
-                                <nav className="flex items-center gap-2 text-sm text-white/50 mb-4">
+                        <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-6">
+                            <div className="text-center md:text-left">
+                                <nav className="flex items-center justify-center md:justify-start gap-2 text-sm text-white/50 mb-4">
                                     <Link href="/" className="hover:text-white transition-colors">Home</Link>
                                     <span className="text-white/30">/</span>
                                     <Link href="/collections/all" className="hover:text-white transition-colors">Shop</Link>

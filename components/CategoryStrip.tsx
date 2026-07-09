@@ -49,6 +49,8 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
                 className="relative overflow-hidden"
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
+                onTouchStart={() => setIsPaused(true)}
+                onTouchEnd={() => setTimeout(() => setIsPaused(false), 2000)}
             >
                 <div
                     ref={scrollRef}
