@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 const BRANDS = [
     { name: "HP", slug: "hp", border: "rgba(0,150,214,0.20)", glow: "rgba(0,150,214,0.12)", svg: <svg viewBox="0 0 48 48" className="w-8 h-8" fill="none"><text x="4" y="36" fontSize="28" fontWeight="900" fill="#0096D6" fontFamily="Arial">hp</text></svg> },
@@ -50,59 +50,12 @@ function BrandCard({ brand }: { brand: typeof BRANDS[number] }) {
     );
 }
 
-function MobileCarousel() {
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const [isPaused, setIsPaused] = useState(false);
-    const animRef = useRef<number>(0);
-    const speedRef = useRef(0.5);
-
-    useEffect(() => {
-        const el = scrollRef.current;
-        if (!el) return;
-
-        const animate = () => {
-            if (!isPaused && el) {
-                el.scrollLeft += speedRef.current;
-                // Reset to start when we've scrolled through the first set
-                if (el.scrollLeft >= el.scrollWidth / 2) {
-                    el.scrollLeft = 0;
-                }
-            }
-            animRef.current = requestAnimationFrame(animate);
-        };
-
-        animRef.current = requestAnimationFrame(animate);
-        return () => cancelAnimationFrame(animRef.current);
-    }, [isPaused]);
-
-    // Duplicate brands for seamless loop
-    const items = [...BRANDS, ...BRANDS];
-
-    return (
-        <div
-            className="relative overflow-hidden md:hidden"
-            onTouchStart={() => setIsPaused(true)}
-            onTouchEnd={() => setTimeout(() => setIsPaused(false), 2000)}
-        >
-            <div
-                ref={scrollRef}
-                className="flex gap-3 overflow-x-hidden py-1"
-            >
-                {items.map((brand, i) => (
-                    <div
-                        key={`${brand.name}-${i}`}
-                        className="flex-shrink-0"
-                        style={{ width: "calc((100% - 1.5rem) / 3)" }}
-                    >
-                        <BrandCard brand={brand} />
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-
 export function BrandStrip() {
+    const [isPaused, setIsPaused] = useState(false);
+
+    // Duplicate brands for seamless loop on mobile
+    const mobileItems = [...BRANDS, ...BRANDS];
+
     return (
         <section
             className="relative py-14 px-4 overflow-hidden"
@@ -130,8 +83,27 @@ export function BrandStrip() {
                     </Link>
                 </div>
 
-                {/* Mobile: auto-scrolling carousel (3 per view) */}
-                <MobileCarousel />
+                {/* Mobile: CSS-animated auto-scrolling carousel (3 per view) */}
+                <div
+                    className="md:hidden overflow-hidden"
+                    onTouchStart={() => setIsPaused(true)}
+                    onTouchEnd={() => setTimeout(() => setIsPaused(false), 2000)}
+                >
+                    <div
+                        className="flex gap-3 brand-scroll-track"
+                        style={{ animationPlayState: isPaused ? "paused" : "running" }}
+                    >
+                        {mobileItems.map((brand, i) => (
+                            <div
+                                key={`${brand.name}-${i}`}
+                                className="flex-shrink-0"
+                                style={{ width: "calc((100% - 1.5rem) / 3)" }}
+                            >
+                                <BrandCard brand={brand} />
+                            </div>
+                        ))}
+                    </div>
+                </div>
 
                 {/* Desktop: grid layout (hidden on mobile) */}
                 <div className="hidden md:grid grid-cols-4 md:grid-cols-6 gap-3">
@@ -157,9 +129,19 @@ export function BrandStrip() {
                     0%   { transform: translateX(0); }
                     100% { transform: translateX(-50%); }
                 }
+                @keyframes brandCarouselScroll {
+                    0%   { transform: translateX(0); }
+                    100% { transform: translateX(-50%); }
+                }
                 @keyframes shimmer {
                     0%   { transform: translateX(-100%); }
                     100% { transform: translateX(200%); }
+                }
+                .brand-scroll-track {
+                    animation: brandCarouselScroll 30s linear infinite;
+                    will-change: transform;
+                    -webkit-transform: translateZ(0);
+                    transform: translateZ(0);
                 }
             `}</style>
         </section>

@@ -206,7 +206,7 @@ export function Header() {
     };
 
     return (
-        <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-50/90 via-white/95 to-blue-50/90 backdrop-blur-xl border-b border-blue-100/30 shadow-sm overflow-hidden">
+        <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-50/90 via-white/95 to-blue-50/90 backdrop-blur-xl border-b border-blue-100/30 shadow-sm" style={{ overflow: "hidden", WebkitOverflowScrolling: "touch", maxWidth: "100vw" }}>
             <div className="max-w-7xl mx-auto px-3 sm:px-4">
                 <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
                     <Link href="/" className="shrink-0 group">
@@ -525,29 +525,32 @@ export function Header() {
                 </div>
 
                 {mobileSearchOpen && (
-                    <div className="lg:hidden py-3 border-t border-gray-100 animate-in slide-in-from-top duration-300">
-                        <form onSubmit={handleSearchSubmit} className="relative">
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <input
-                                type="text"
-                                placeholder="Search products, brands..."
-                                className="w-full pl-10 pr-20 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                autoFocus
-                            />
-                            {searchQuery && (
-                                <button
-                                    type="button"
-                                    onClick={() => setSearchQuery("")}
-                                    className="absolute right-12 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            )}
+                    <div className="lg:hidden py-3 border-t border-gray-100 animate-in slide-in-from-top duration-300" style={{ maxWidth: "100%", overflow: "hidden" }}>
+                        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 px-1">
+                            <div className="relative flex-1 min-w-0">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                                <input
+                                    type="search"
+                                    placeholder="Search products, brands..."
+                                    className="w-full pl-9 pr-8 py-2.5 bg-white border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    style={{ fontSize: "16px" }}
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    autoFocus
+                                />
+                                {searchQuery && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearchQuery("")}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
                             <button
                                 type="submit"
-                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-medium"
+                                className="flex-shrink-0 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium"
                             >
                                 Go
                             </button>

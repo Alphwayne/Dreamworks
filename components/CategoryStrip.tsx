@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 interface CategoryItem {
     label: string;
@@ -16,32 +16,13 @@ interface CategoryStripProps {
 }
 
 export function CategoryStrip({ categories }: CategoryStripProps) {
-    const scrollRef = useRef<HTMLDivElement>(null);
     const [isPaused, setIsPaused] = useState(false);
-    const animationRef = useRef<number>(0);
-    const scrollSpeed = 0.5;
 
-    useEffect(() => {
-        const container = scrollRef.current;
-        if (!container) return;
-
-        function animate() {
-            if (!isPaused && container) {
-                container.scrollLeft += scrollSpeed;
-                if (container.scrollLeft >= container.scrollWidth / 2) {
-                    container.scrollLeft = 0;
-                }
-            }
-            animationRef.current = requestAnimationFrame(animate);
-        }
-
-        animationRef.current = requestAnimationFrame(animate);
-        return () => {
-            if (animationRef.current) cancelAnimationFrame(animationRef.current);
-        };
-    }, [isPaused]);
-
+    // Duplicate items for seamless infinite loop
     const displayCategories = [...categories, ...categories];
+
+    // Calculate animation duration based on item count (slower = smoother)
+    const duration = categories.length * 3;
 
     return (
         <section className="relative w-full">
@@ -53,9 +34,11 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
                 onTouchEnd={() => setTimeout(() => setIsPaused(false), 2000)}
             >
                 <div
-                    ref={scrollRef}
-                    className="flex gap-5 overflow-x-hidden py-2"
-                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                    className="flex gap-5 py-2 category-scroll-track"
+                    style={{
+                        animationPlayState: isPaused ? "paused" : "running",
+                        animationDuration: `${duration}s`,
+                    }}
                 >
                     {displayCategories.map((cat, idx) => (
                         <Link
@@ -68,6 +51,7 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
                                 <img
                                     src={cat.image}
                                     alt={cat.label}
+                                    loading="lazy"
                                     className="absolute inset-0 w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-700"
                                 />
                             </div>
@@ -79,6 +63,19 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
                     ))}
                 </div>
             </div>
+
+            <style>{`
+                @keyframes categoryScroll {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-50%); }
+                }
+                .category-scroll-track {
+                    animation: categoryScroll 30s linear infinite;
+                    will-change: transform;
+                    -webkit-transform: translateZ(0);
+                    transform: translateZ(0);
+                }
+            `}</style>
         </section>
     );
 }

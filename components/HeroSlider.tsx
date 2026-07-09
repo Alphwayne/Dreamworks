@@ -45,7 +45,7 @@ export function HeroSlider() {
     }
 
     return (
-        <section className="relative h-[520px] lg:h-[580px] overflow-hidden rounded-[20px] lg:rounded-[30px]">
+        <section className="relative h-[320px] sm:h-[420px] lg:h-[580px] overflow-hidden rounded-[20px] lg:rounded-[30px]">
             {/* All slides stacked — only opacity changes, so there's NEVER a blank gap */}
             {slides.map((slide, index) => (
                 <div
@@ -63,8 +63,9 @@ export function HeroSlider() {
                         className="object-cover"
                         style={{ objectPosition: slide.objectPosition }}
                         priority={index === 0}
-                        sizes="100vw"
-                        quality={100}
+                        loading={index === 0 ? "eager" : "lazy"}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
+                        quality={75}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
                 </div>

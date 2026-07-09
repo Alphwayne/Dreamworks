@@ -128,7 +128,7 @@ async function getJustLaunched() {
   return data || [];
 }
 
-// Fetch bundle suggestions
+// Fetch bundle suggestions — single query, then split by category
 async function getBundles() {
   const bundleConfigs = [
     { title: "Home Office", icon: "💻", description: "Everything you need for a productive workspace", categories: ["COMPUTING ACCESSORIES", "POWER", "ACCESSORIES"] },
@@ -136,27 +136,36 @@ async function getBundles() {
     { title: "Mobile Life", icon: "📱", description: "Stay connected and powered up on the go", categories: ["MOBILE & TABLET", "ACCESSORIES", "POWER"] },
   ];
 
-  const bundles = await Promise.all(
-    bundleConfigs.map(async (config) => {
-      const products: any[] = [];
-      for (const cat of config.categories) {
-        const { data } = await supabase
-          .from("products")
-          .select("id, product_name, selling_price, image_url, slug, category")
-          .eq("category", cat)
-          .eq("is_active", true)
-          .limit(3);
-        if (data) products.push(...data);
-      }
-      return {
-        title: config.title,
-        description: config.description,
-        icon: config.icon,
-        gradient: "",
-        products: products.slice(0, 8),
-      };
-    })
-  );
+  // Fetch all needed categories in one query
+  const allCategories = [...new Set(bundleConfigs.flatMap(c => c.categories))];
+  const { data: allProducts } = await supabase
+    .from("products")
+    .select("id, product_name, selling_price, image_url, slug, category")
+    .in("category", allCategories)
+    .eq("is_active", true)
+    .limit(50);
+
+  const productsByCategory = new Map<string, any[]>();
+  (allProducts || []).forEach(p => {
+    const list = productsByCategory.get(p.category) || [];
+    list.push(p);
+    productsByCategory.set(p.category, list);
+  });
+
+  const bundles = bundleConfigs.map((config) => {
+    const products: any[] = [];
+    for (const cat of config.categories) {
+      const catProducts = productsByCategory.get(cat) || [];
+      products.push(...catProducts.slice(0, 3));
+    }
+    return {
+      title: config.title,
+      description: config.description,
+      icon: config.icon,
+      gradient: "",
+      products: products.slice(0, 8),
+    };
+  });
 
   return bundles.filter((b) => b.products.length >= 3);
 }
@@ -251,7 +260,7 @@ export default async function Home() {
   return (
     <>
       <CartDrawer />
-      <div className="min-h-screen overflow-x-hidden" style={{ background: "linear-gradient(160deg,#eef2ff 0%,#f8faff 30%,#f0f7ff 60%,#eff0ff 100%)" }}>
+      <div className="min-h-screen" style={{ background: "linear-gradient(160deg,#eef2ff 0%,#f8faff 30%,#f0f7ff 60%,#eff0ff 100%)", overflowX: "hidden", maxWidth: "100vw" }}>
         <Header />
 
         {/* === HERO SECTION (UNTOUCHED) === */}

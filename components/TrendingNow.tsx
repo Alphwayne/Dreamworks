@@ -4,7 +4,7 @@ import { TrendingUp, Flame, Eye } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatPrice } from "@/lib/types";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 interface TrendingProduct {
     id: number;
@@ -17,34 +17,13 @@ interface TrendingProduct {
 }
 
 export function TrendingNow({ products }: { products: TrendingProduct[] }) {
-    const scrollRef = useRef<HTMLDivElement>(null);
     const [isPaused, setIsPaused] = useState(false);
-    const animationRef = useRef<number>(0);
-
-    useEffect(() => {
-        const container = scrollRef.current;
-        if (!container) return;
-
-        function animate() {
-            if (!isPaused && container) {
-                container.scrollLeft += 0.6;
-                if (container.scrollLeft >= container.scrollWidth / 2) {
-                    container.scrollLeft = 0;
-                }
-            }
-            animationRef.current = requestAnimationFrame(animate);
-        }
-
-        animationRef.current = requestAnimationFrame(animate);
-        return () => {
-            if (animationRef.current) cancelAnimationFrame(animationRef.current);
-        };
-    }, [isPaused]);
 
     if (!products.length) return null;
 
     // Duplicate for infinite scroll effect
     const displayProducts = [...products, ...products];
+    const duration = products.length * 4;
 
     return (
         <section className="py-10 px-4 max-w-7xl mx-auto">
@@ -77,9 +56,11 @@ export function TrendingNow({ products }: { products: TrendingProduct[] }) {
                 <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white/60 to-transparent z-10 pointer-events-none" />
 
                 <div
-                    ref={scrollRef}
-                    className="flex gap-4 overflow-x-hidden pb-2"
-                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                    className="flex gap-4 pb-2 trending-scroll-track"
+                    style={{
+                        animationPlayState: isPaused ? "paused" : "running",
+                        animationDuration: `${duration}s`,
+                    }}
                 >
                     {displayProducts.map((product, index) => {
                         const discount = product.compare_price
@@ -112,6 +93,7 @@ export function TrendingNow({ products }: { products: TrendingProduct[] }) {
                                                 alt={product.product_name}
                                                 fill
                                                 className="object-contain p-3 group-hover:scale-110 transition-transform duration-500"
+                                                sizes="200px"
                                             />
                                         </div>
                                     </div>
@@ -139,6 +121,19 @@ export function TrendingNow({ products }: { products: TrendingProduct[] }) {
                     })}
                 </div>
             </div>
+
+            <style>{`
+                @keyframes trendingScroll {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-50%); }
+                }
+                .trending-scroll-track {
+                    animation: trendingScroll 40s linear infinite;
+                    will-change: transform;
+                    -webkit-transform: translateZ(0);
+                    transform: translateZ(0);
+                }
+            `}</style>
         </section>
     );
 }

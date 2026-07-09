@@ -75,11 +75,11 @@ export function FlashDeals({ deals }: { deals: FlashDeal[] }) {
     return (
         <section className="py-8 px-4 max-w-7xl mx-auto">
             <div className="rounded-3xl overflow-hidden relative" style={{ background: "linear-gradient(135deg, #dc2626 0%, #991b1b 40%, #7f1d1d 100%)" }}>
-                {/* Animated background elements */}
+                {/* Animated background elements — reduced on mobile for performance */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute -top-20 -right-20 w-80 h-80 bg-yellow-500/10 rounded-full animate-pulse" />
-                    <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-orange-500/10 rounded-full animate-pulse" style={{ animationDelay: "1s" }} />
-                    <div className="absolute top-1/2 left-1/2 w-40 h-40 bg-red-400/5 rounded-full -translate-x-1/2 -translate-y-1/2 animate-ping" style={{ animationDuration: "3s" }} />
+                    <div className="absolute -top-20 -right-20 w-80 h-80 bg-yellow-500/10 rounded-full sm:animate-pulse" />
+                    <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-orange-500/10 rounded-full hidden sm:block sm:animate-pulse" style={{ animationDelay: "1s" }} />
+                    <div className="absolute top-1/2 left-1/2 w-40 h-40 bg-red-400/5 rounded-full -translate-x-1/2 -translate-y-1/2 hidden sm:block sm:animate-ping" style={{ animationDuration: "3s" }} />
                 </div>
 
                 {/* Header */}
@@ -126,6 +126,8 @@ export function FlashDeals({ deals }: { deals: FlashDeal[] }) {
                                                 src={deal.image_url || "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&q=75"}
                                                 alt={deal.product_name}
                                                 fill
+                                                sizes="260px"
+                                                loading="lazy"
                                                 className="object-contain p-4 group-hover:scale-110 transition-transform duration-500"
                                             />
                                             {discount > 0 && (

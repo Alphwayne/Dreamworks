@@ -124,10 +124,25 @@
 
   body {
     @apply bg-background text-foreground;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 
   html {
     @apply font-sans;
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  /* Prevent iOS Safari zoom on input focus */
+  input[type="text"],
+  input[type="search"],
+  input[type="email"],
+  input[type="tel"],
+  textarea,
+  select {
+    font-size: 16px;
   }
 }
 
@@ -171,4 +186,27 @@
 /* Tabular numbers for countdown timers */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* Reduce motion on mobile for performance */
+@media (max-width: 640px) {
+  .animate-pulse {
+    animation: none !important;
+  }
+  .animate-ping {
+    animation: none !important;
+  }
+  .animate-bounce {
+    animation: none !important;
+  }
+}
+
+/* GPU acceleration for animated elements */
+.category-scroll-track,
+.trending-scroll-track,
+.brand-scroll-track {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
 }

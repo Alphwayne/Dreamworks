@@ -40,6 +40,8 @@ export function ProductCard({ product }: ProductCardProps) {
                     <img
                         src={image}
                         alt={product.product_name}
+                        loading="lazy"
+                        decoding="async"
                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-108"
                         style={{ transform: "scale(1)", transition: "transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)" }}
                         onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.08)"; }}

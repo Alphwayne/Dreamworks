@@ -188,7 +188,7 @@ export default function CollectionPage() {
     return (
         <>
             <CartDrawer />
-            <div className="min-h-screen bg-gray-50">
+            <div className="min-h-screen bg-gray-50" style={{ overflowX: "hidden", maxWidth: "100vw" }}>
                 <Header />
 
                 {/* Hero Section */}

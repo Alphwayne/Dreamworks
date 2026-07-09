@@ -57,6 +57,8 @@ export function JustLaunched({ products }: { products: NewProduct[] }) {
                                     src={hero.image_url || "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&q=80"}
                                     alt={hero.product_name}
                                     fill
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    loading="lazy"
                                     className="object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-700"
                                 />
                             </div>
@@ -93,6 +95,8 @@ export function JustLaunched({ products }: { products: NewProduct[] }) {
                                     src={product.image_url || "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&q=75"}
                                     alt={product.product_name}
                                     fill
+                                    sizes="(max-width: 768px) 50vw, 25vw"
+                                    loading="lazy"
                                     className="object-contain p-3 group-hover:scale-110 transition-transform duration-500"
                                 />
                                 <span className="absolute top-2 left-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-md">
