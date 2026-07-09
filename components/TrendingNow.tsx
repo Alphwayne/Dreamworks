@@ -4,7 +4,7 @@ import { TrendingUp, Flame, Eye } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatPrice } from "@/lib/types";
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 
 interface TrendingProduct {
     id: number;
@@ -17,67 +17,79 @@ interface TrendingProduct {
 }
 
 export function TrendingNow({ products }: { products: TrendingProduct[] }) {
-    const [isPaused, setIsPaused] = useState(false);
     const trackRef = useRef<HTMLDivElement>(null);
+    const animRef = useRef<number | null>(null);
+    const posRef = useRef(0);
+    const isPausedRef = useRef(false);
     const touchStartX = useRef(0);
-    const scrollOffset = useRef(0);
-    const currentTranslate = useRef(0);
+    const touchStartPos = useRef(0);
     const resumeTimer = useRef<NodeJS.Timeout | null>(null);
+    const [, forceRender] = useState(0);
 
     if (!products.length) return null;
 
     // Duplicate for infinite scroll effect
     const displayProducts = [...products, ...products];
-    // Faster: was products.length * 4, now * 2.2
-    const duration = products.length * 2.2;
 
-    const handleTouchStart = (e: React.TouchEvent) => {
-        setIsPaused(true);
-        touchStartX.current = e.touches[0].clientX;
+    // Speed: pixels per frame (~60fps)
+    const speed = 1.0;
 
-        if (trackRef.current) {
-            const style = window.getComputedStyle(trackRef.current);
-            const matrix = new DOMMatrix(style.transform);
-            currentTranslate.current = matrix.m41;
-            scrollOffset.current = currentTranslate.current;
-            trackRef.current.style.animation = "none";
-            trackRef.current.style.transform = `translateX(${currentTranslate.current}px)`;
+    const animate = useCallback(() => {
+        if (!trackRef.current) return;
+
+        if (!isPausedRef.current) {
+            posRef.current -= speed;
+
+            const halfWidth = trackRef.current.scrollWidth / 2;
+            if (Math.abs(posRef.current) >= halfWidth) {
+                posRef.current = posRef.current + halfWidth;
+            }
+            if (posRef.current > 0) {
+                posRef.current = posRef.current - halfWidth;
+            }
+
+            trackRef.current.style.transform = `translateX(${posRef.current}px)`;
         }
 
+        animRef.current = requestAnimationFrame(animate);
+    }, [speed]);
+
+    useEffect(() => {
+        animRef.current = requestAnimationFrame(animate);
+        return () => {
+            if (animRef.current) cancelAnimationFrame(animRef.current);
+            if (resumeTimer.current) clearTimeout(resumeTimer.current);
+        };
+    }, [animate]);
+
+    const handleMouseEnter = () => { isPausedRef.current = true; };
+    const handleMouseLeave = () => { isPausedRef.current = false; };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        isPausedRef.current = true;
+        touchStartX.current = e.touches[0].clientX;
+        touchStartPos.current = posRef.current;
         if (resumeTimer.current) clearTimeout(resumeTimer.current);
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
-        if (!trackRef.current) return;
         const diff = e.touches[0].clientX - touchStartX.current;
-        const newTranslate = scrollOffset.current + diff;
-        trackRef.current.style.transform = `translateX(${newTranslate}px)`;
-        currentTranslate.current = newTranslate;
+        posRef.current = touchStartPos.current + diff;
+        if (trackRef.current) {
+            trackRef.current.style.transform = `translateX(${posRef.current}px)`;
+        }
     };
 
     const handleTouchEnd = () => {
-        if (!trackRef.current) return;
+        if (trackRef.current) {
+            const halfWidth = trackRef.current.scrollWidth / 2;
+            if (posRef.current > 0) posRef.current = posRef.current - halfWidth;
+            if (Math.abs(posRef.current) >= halfWidth) posRef.current = posRef.current + halfWidth;
+        }
 
-        // Wrap around if scrolled too far
-        const trackWidth = trackRef.current.scrollWidth / 2;
-        let finalPos = currentTranslate.current;
-        if (finalPos > 0) finalPos = -trackWidth + finalPos;
-        if (finalPos < -trackWidth) finalPos = finalPos + trackWidth;
-
-        trackRef.current.style.transform = `translateX(${finalPos}px)`;
-        currentTranslate.current = finalPos;
-
-        // Resume auto-scroll after 2.5s
         resumeTimer.current = setTimeout(() => {
-            if (trackRef.current) {
-                const trackWidth = trackRef.current.scrollWidth / 2;
-                const progress = Math.abs(finalPos) / trackWidth;
-                trackRef.current.style.animation = "";
-                trackRef.current.style.transform = "";
-                trackRef.current.style.animationDelay = `-${progress * duration}s`;
-            }
-            setIsPaused(false);
-        }, 2500);
+            isPausedRef.current = false;
+        }, 2000);
     };
 
     return (
@@ -101,8 +113,8 @@ export function TrendingNow({ products }: { products: TrendingProduct[] }) {
             {/* Auto-scrolling horizontal strip */}
             <div
                 className="relative overflow-hidden rounded-2xl"
-                onMouseEnter={() => setIsPaused(true)}
-                onMouseLeave={() => setIsPaused(false)}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
             >
                 {/* Subtle fade edges */}
                 <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white/60 to-transparent z-10 pointer-events-none" />
@@ -110,10 +122,12 @@ export function TrendingNow({ products }: { products: TrendingProduct[] }) {
 
                 <div
                     ref={trackRef}
-                    className="flex gap-4 pb-2 trending-scroll-track"
+                    className="flex gap-4 pb-2"
                     style={{
-                        animationPlayState: isPaused ? "paused" : "running",
-                        animationDuration: `${duration}s`,
+                        willChange: "transform",
+                        WebkitTransform: "translateZ(0)",
+                        transform: "translateZ(0)",
+                        touchAction: "pan-x",
                     }}
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
@@ -179,20 +193,6 @@ export function TrendingNow({ products }: { products: TrendingProduct[] }) {
                     })}
                 </div>
             </div>
-
-            <style>{`
-                @keyframes trendingScroll {
-                    0% { transform: translateX(0); }
-                    100% { transform: translateX(-50%); }
-                }
-                .trending-scroll-track {
-                    animation: trendingScroll ${duration}s linear infinite;
-                    will-change: transform;
-                    -webkit-transform: translateZ(0);
-                    transform: translateZ(0);
-                    touch-action: pan-x;
-                }
-            `}</style>
         </section>
     );
 }
