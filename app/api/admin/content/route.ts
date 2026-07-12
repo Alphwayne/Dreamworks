@@ -28,9 +28,11 @@ export async function GET() {
     if (heroData && heroData.length > 0) {
         results.heroSlides = heroData.map((d: any) => ({ ...d.content, id: d.id }));
     } else {
+        // Default hero slides matching the actual HeroSlider component
         results.heroSlides = [
-            { id: "1", title: "Oraimo Smart Accessories", subtitle: "Smart Life. Simplified.", cta_text: "Shop Oraimo", cta_link: "/brands/oraimo", bg_image: "/dw-oraimo.png", bg_video: "", is_active: true, order: 1 },
-            { id: "2", title: "Samsung Galaxy Z Fold7", subtitle: "Unfold the future", cta_text: "Shop Samsung", cta_link: "/brands/samsung", bg_image: "", bg_video: "/Galaxy-Z-Fold7_Home_Hero_PC_1920x1080_LTR.mp4", is_active: true, order: 2 },
+            { id: "1", title: "Oraimo Smart Accessories", cta_text: "Shop Oraimo", cta_link: "/brands/oraimo", bg_image: "/dw-oraimo.png", bg_video: "", is_active: true, order: 1 },
+            { id: "2", title: "LG Premium Electronics", cta_text: "Shop LG", cta_link: "/brands/lg", bg_image: "/dw-lg.png", bg_video: "", is_active: true, order: 2 },
+            { id: "3", title: "Hisense World Cup Edition", cta_text: "Shop Hisense", cta_link: "/brands/hisense", bg_image: "/dw-hisensecup.png", bg_video: "", is_active: true, order: 3 },
         ];
     }
 
