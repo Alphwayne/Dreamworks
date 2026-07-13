@@ -271,7 +271,7 @@ export default async function Home() {
         <div className="h-8 md:h-12" />
 
         {/* === FEATURED PRODUCTS STRIP === */}
-        <div className="px-4 md:px-6 mb-8">
+        <div className="px-4 md:px-6 mb-8 bg-white rounded-xl">
           <CategoryStrip categories={catchyProducts} />
         </div>
 
