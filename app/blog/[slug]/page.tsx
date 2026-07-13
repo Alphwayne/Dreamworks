@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { Header } from "@/components/Header";
 import { CartDrawer } from "@/components/CartDrawer";
@@ -19,7 +20,20 @@ interface Comment {
     replies: Comment[];
 }
 
-const PLACEHOLDER_CONTENT = `
+interface BlogPost {
+    id: number;
+    title: string;
+    slug: string;
+    excerpt: string;
+    content: string;
+    thumbnail: string | null;
+    category: string;
+    author: string;
+    published_at: string;
+    read_time: number;
+}
+
+const DEFAULT_CONTENT = `
 Nigeria's tech landscape has evolved dramatically over the past decade, and at the center of this evolution stands Dreamworks Direct — a brand that has been consistently delivering authentic, quality technology for over 22 years.
 
 ## Our Story
@@ -56,6 +70,8 @@ export default function BlogPostPage() {
     const params = useParams();
     const slug = params.slug as string;
 
+    const [post, setPost] = useState<BlogPost | null>(null);
+    const [loading, setLoading] = useState(true);
     const [liked, setLiked] = useState(false);
     const [likes, setLikes] = useState(0);
     const [comments, setComments] = useState<Comment[]>([]);
@@ -66,6 +82,24 @@ export default function BlogPostPage() {
     const [replyText, setReplyText] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
+
+    // Load post data from API
+    useEffect(() => {
+        async function fetchPost() {
+            try {
+                const res = await fetch("/api/admin/blog");
+                const data = await res.json();
+                if (data.posts && data.posts.length > 0) {
+                    const found = data.posts.find((p: BlogPost) => p.slug === slug);
+                    if (found) setPost(found);
+                }
+            } catch (err) {
+                console.error("Failed to load post:", err);
+            }
+            setLoading(false);
+        }
+        fetchPost();
+    }, [slug]);
 
     // Load comments from API
     const loadComments = useCallback(async () => {
@@ -105,7 +139,7 @@ export default function BlogPostPage() {
 
     const handleShare = () => {
         if (navigator.share) {
-            navigator.share({ title: "DreamWorks Blog", url: window.location.href });
+            navigator.share({ title: post?.title || "DreamWorks Blog", url: window.location.href });
         } else {
             navigator.clipboard.writeText(window.location.href);
             alert("Link copied!");
@@ -159,7 +193,6 @@ export default function BlogPostPage() {
             setLikedComments(newLikedComments);
             localStorage.setItem("dw_liked_comments", JSON.stringify([...newLikedComments]));
 
-            // Reload comments to get updated like counts
             loadComments();
         } catch (err) {
             console.error("Failed to toggle comment like:", err);
@@ -243,6 +276,25 @@ export default function BlogPostPage() {
         return date.toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" });
     }
 
+    const displayTitle = post?.title || slug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    const displayContent = post?.content || DEFAULT_CONTENT;
+    const displayCategory = post?.category || "Product News";
+    const displayAuthor = post?.author || "Dreamworks Integrated Systems";
+    const displayReadTime = post?.read_time || 4;
+    const displayDate = post?.published_at || "2026-06-06";
+
+    if (loading) {
+        return (
+            <>
+                <CartDrawer />
+                <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #fafbff 50%, #f5f0ff 100%)" }}>
+                    <Header />
+                    <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+                </div>
+            </>
+        );
+    }
+
     return (
         <>
             <CartDrawer />
@@ -258,17 +310,23 @@ export default function BlogPostPage() {
                     {/* Article */}
                     <article className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm mb-8">
                         {/* Hero */}
-                        <div className="h-64 md:h-80 bg-gradient-to-br from-blue-800 via-blue-900 to-purple-900 relative">
-                            <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                                <span className="text-9xl">📰</span>
-                            </div>
+                        <div className="h-64 md:h-80 relative overflow-hidden">
+                            {post?.thumbnail ? (
+                                <Image src={post.thumbnail} alt={displayTitle} fill className="object-cover" />
+                            ) : (
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-800 via-blue-900 to-purple-900">
+                                    <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                                        <span className="text-9xl">📰</span>
+                                    </div>
+                                </div>
+                            )}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                             <div className="absolute bottom-0 left-0 right-0 p-8">
                                 <span className="bg-blue-500/80 text-white text-xs font-bold px-3 py-1 rounded-full mb-3 inline-block">
-                                    Product News
+                                    {displayCategory}
                                 </span>
                                 <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight">
-                                    Why Dreamworks Is Nigeria&apos;s Trusted Technology Partner
+                                    {displayTitle}
                                 </h1>
                             </div>
                         </div>
@@ -277,12 +335,12 @@ export default function BlogPostPage() {
                         <div className="px-6 md:px-8 py-4 border-b border-gray-50 flex items-center justify-between flex-wrap gap-3">
                             <div className="flex items-center gap-4 text-sm text-gray-500">
                                 <span className="flex items-center gap-1.5">
-                                    <User size={14} /> Dreamworks Integrated Systems
+                                    <User size={14} /> {displayAuthor}
                                 </span>
                                 <span className="flex items-center gap-1.5">
-                                    <Clock size={14} /> 4 min read
+                                    <Clock size={14} /> {displayReadTime} min read
                                 </span>
-                                <span>June 6, 2026</span>
+                                <span>{new Date(displayDate).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
@@ -302,12 +360,16 @@ export default function BlogPostPage() {
 
                         {/* Content */}
                         <div className="px-6 md:px-8 py-8 prose prose-blue max-w-none">
-                            {PLACEHOLDER_CONTENT.split("\n").map((para, i) => {
+                            {displayContent.split("\n").map((para, i) => {
                                 if (para.startsWith("## ")) {
                                     return <h2 key={i} className="text-xl font-bold text-gray-900 mt-8 mb-3">{para.replace("## ", "")}</h2>;
                                 }
                                 if (para.startsWith("**") && para.endsWith("**")) {
                                     return <p key={i} className="font-bold text-gray-800 mb-1">{para.replace(/\*\*/g, "")}</p>;
+                                }
+                                if (para.match(/^\*\*.*\*\* —/)) {
+                                    const parts = para.split(" — ");
+                                    return <p key={i} className="text-gray-600 leading-relaxed mb-4"><strong className="text-gray-800">{parts[0].replace(/\*\*/g, "")}</strong> — {parts.slice(1).join(" — ")}</p>;
                                 }
                                 if (para.trim()) {
                                     return <p key={i} className="text-gray-600 leading-relaxed mb-4">{para}</p>;

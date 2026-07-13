@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
     LayoutDashboard, Package, ShoppingCart, Users, BarChart3,
-    FileText, Code2, UserCog, LogOut, ChevronLeft,
+    FileText, Code2, UserCog, LogOut, ChevronLeft, Newspaper,
     Menu, X
 } from "lucide-react";
 
@@ -29,6 +29,7 @@ const NAV_ITEMS: NavItem[] = [
     { label: "Customers", href: "/admin/customers", icon: Users, roles: ["oracle", "admin"] },
     { label: "Analytics", href: "/admin/analytics", icon: BarChart3, roles: ["oracle", "admin"] },
     { label: "Content", href: "/admin/content", icon: FileText, roles: ["oracle", "admin"] },
+    { label: "Blog", href: "/admin/blog", icon: Newspaper, roles: ["oracle", "admin", "staff"] },
     { label: "Code Editor", href: "/admin/code-editor", icon: Code2, roles: ["oracle"] },
     { label: "Staff", href: "/admin/staff", icon: UserCog, roles: ["oracle"] },
 ];

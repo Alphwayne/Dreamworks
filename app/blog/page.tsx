@@ -238,8 +238,24 @@ function BlogCard({ post, featured = false }: { post: BlogPost; featured?: boole
 export default function BlogPage() {
     const [activeCategory, setActiveCategory] = useState("All");
     const [search, setSearch] = useState("");
+    const [posts, setPosts] = useState<BlogPost[]>(PLACEHOLDER_POSTS);
 
-    const filtered = PLACEHOLDER_POSTS.filter((p) => {
+    useEffect(() => {
+        async function fetchPosts() {
+            try {
+                const res = await fetch("/api/admin/blog");
+                const data = await res.json();
+                if (data.posts && data.posts.length > 0) {
+                    setPosts(data.posts.map((p: any) => ({ ...p, likes: p.likes || 0 })));
+                }
+            } catch (err) {
+                // Keep using PLACEHOLDER_POSTS
+            }
+        }
+        fetchPosts();
+    }, []);
+
+    const filtered = posts.filter((p) => {
         const matchesCat = activeCategory === "All" || p.category === activeCategory;
         const matchesSearch = !search || p.title.toLowerCase().includes(search.toLowerCase());
         return matchesCat && matchesSearch;

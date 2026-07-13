@@ -117,17 +117,17 @@ export function CategoryStrip({ categories }: CategoryStripProps) {
                         <Link
                             key={`${cat.slug}-${idx}`}
                             href={cat.isProduct ? `/products/${cat.slug}` : `/collections/${cat.slug}`}
-                            className="flex-shrink-0 group/card text-center"
+                            className="flex-shrink-0 group/card text-center w-[140px] sm:w-[160px] md:w-[180px]"
                         >
-                            <div className="relative w-[150px] sm:w-[170px] md:w-[190px] h-[130px] sm:h-[145px] md:h-[160px] rounded-2xl overflow-hidden shadow-md group-hover/card:shadow-xl group-hover/card:shadow-blue-500/10 transition-all duration-500 group-hover/card:-translate-y-1.5 group-hover/card:scale-[1.03] bg-gray-100">
+                            <div className="transition-all duration-500 group-hover/card:-translate-y-1.5 group-hover/card:scale-[1.03]">
                                 <img
                                     src={cat.image}
                                     alt={cat.label}
                                     loading="lazy"
-                                    className="absolute inset-0 w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-700"
+                                    className="w-full h-[110px] sm:h-[125px] md:h-[140px] object-contain mix-blend-multiply group-hover/card:scale-110 transition-transform duration-700"
                                 />
                             </div>
-                            <p className="mt-2.5 text-[11px] sm:text-xs font-semibold text-gray-700 group-hover/card:text-blue-600 transition-colors line-clamp-2 max-w-[150px] sm:max-w-[170px] md:max-w-[190px] mx-auto leading-tight">
+                            <p className="mt-1.5 text-[11px] sm:text-xs font-semibold text-gray-700 group-hover/card:text-blue-600 transition-colors line-clamp-2 leading-tight">
                                 {cat.label}
                             </p>
                         </Link>
