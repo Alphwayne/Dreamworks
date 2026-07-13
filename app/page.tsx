@@ -271,8 +271,15 @@ export default async function Home() {
         <div className="h-8 md:h-12" />
 
         {/* === FEATURED PRODUCTS STRIP === */}
-        <div className="mb-8 bg-white py-4">
-          <CategoryStrip categories={catchyProducts} />
+        <div className="mb-8 relative">
+          {/* Top gradient fade */}
+          <div className="h-8" style={{ background: "linear-gradient(to bottom, transparent, white)" }} />
+          {/* Products on white */}
+          <div className="bg-white">
+            <CategoryStrip categories={catchyProducts} />
+          </div>
+          {/* Bottom gradient fade */}
+          <div className="h-8" style={{ background: "linear-gradient(to top, transparent, white)" }} />
         </div>
 
         {/* === NEW: JUST LAUNCHED BENTO GRID === */}
