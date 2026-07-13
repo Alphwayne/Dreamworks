@@ -155,7 +155,7 @@ export default function AdminBlogPage() {
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-100">Blog Manager</h1>
+                    <h1 className="text-2xl font-bold text-blue-400">Blog Manager</h1>
                     <p className="text-gray-400 mt-1">Create, edit, and manage blog posts with images.</p>
                 </div>
                 {!editing && (
