@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { X, ChevronRight, Sparkles, MessageCircle } from "lucide-react";
+import { X, ChevronRight, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { ChatBot } from "./ChatBot";
 
 const POINTS_INFO = [
     { icon: "⭐", action: "Sign Up", points: "50,000 pts", color: "from-yellow-500 to-orange-500" },
@@ -17,28 +18,8 @@ export function FloatingElements() {
 
     return (
         <>
-            {/* ── CHAT BUTTON ──
-                Desktop: bottom-6 → bottom-5 (DOWN slightly)
-                Mobile:  bottom-20 → bottom-14 (DOWN further - closer to bottom)
-            */}
-            <a
-                href="https://wa.me/2349027256852"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Chat with us"
-                className="fixed bottom-5 right-3 sm:bottom-5 sm:right-4 z-50 flex items-center gap-2.5 bg-gradient-to-r from-blue-800 to-blue-500 text-white px-3 py-2.5 rounded-2xl shadow-xl shadow-blue-600/30 hover:shadow-blue-600/50 transition-all hover:scale-105 hover:-translate-y-0.5"
-            >
-                <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
-                    <MessageCircle size={18} className="text-white fill-white/30" />
-                </div>
-                <div className="text-left hidden sm:block">
-                    <p className="text-xs font-bold leading-none">Live Chat</p>
-                    <p className="text-[10px] text-blue-100 leading-none mt-0.5">Ask us anything</p>
-                </div>
-                <div className="text-left block sm:hidden">
-                    <p className="text-xs font-bold leading-none">Chat</p>
-                </div>
-            </a>
+            {/* ── AI CHATBOT (replaces old WhatsApp link) ── */}
+            <ChatBot />
 
             {/* ── DREAMPOINTS PURSE ──
                 Desktop: bottom-6 → bottom-5 (DOWN slightly)
