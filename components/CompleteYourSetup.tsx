@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Package, Plus, Check, ShoppingCart, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,27 +23,52 @@ interface SetupBundle {
     products: BundleProduct[];
 }
 
+const AUTO_ROTATE_INTERVAL = 6000; // 6 seconds per tab
+
 export function CompleteYourSetup({ bundles }: { bundles: SetupBundle[] }) {
     const [activeBundle, setActiveBundle] = useState(0);
     const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+    const [progress, setProgress] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
     const tabsRef = useRef<HTMLDivElement>(null);
+    const progressRef = useRef<number>(0);
+    const animFrameRef = useRef<number>(0);
+    const lastTimeRef = useRef<number>(0);
 
-    // Mobile hint: briefly scroll tabs to show more exist, then scroll back
+    // Auto-rotate with progress bar animation
+    const animate = useCallback((timestamp: number) => {
+        if (!lastTimeRef.current) lastTimeRef.current = timestamp;
+        const delta = timestamp - lastTimeRef.current;
+        lastTimeRef.current = timestamp;
+
+        if (!isPaused) {
+            progressRef.current += (delta / AUTO_ROTATE_INTERVAL) * 100;
+
+            if (progressRef.current >= 100) {
+                progressRef.current = 0;
+                setActiveBundle((prev) => (prev + 1) % bundles.length);
+                setSelectedItems(new Set());
+            }
+
+            setProgress(progressRef.current);
+        }
+
+        animFrameRef.current = requestAnimationFrame(animate);
+    }, [isPaused, bundles.length]);
+
     useEffect(() => {
-        const el = tabsRef.current;
-        if (!el) return;
-        // Only run on small screens
-        if (window.innerWidth >= 768) return;
+        animFrameRef.current = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(animFrameRef.current);
+    }, [animate]);
 
-        const timeout = setTimeout(() => {
-            el.scrollTo({ left: 60, behavior: "smooth" });
-            setTimeout(() => {
-                el.scrollTo({ left: 0, behavior: "smooth" });
-            }, 600);
-        }, 1200);
-
-        return () => clearTimeout(timeout);
-    }, []);
+    // Reset progress when user manually clicks a tab
+    const handleTabClick = (index: number) => {
+        setActiveBundle(index);
+        setSelectedItems(new Set());
+        progressRef.current = 0;
+        setProgress(0);
+        lastTimeRef.current = 0;
+    };
 
     if (!bundles.length) return null;
 
@@ -62,6 +87,9 @@ export function CompleteYourSetup({ bundles }: { bundles: SetupBundle[] }) {
             else next.add(id);
             return next;
         });
+        // Pause auto-rotate when user interacts
+        setIsPaused(true);
+        setTimeout(() => setIsPaused(false), 10000); // Resume after 10s of inactivity
     }
 
     return (
@@ -77,25 +105,34 @@ export function CompleteYourSetup({ bundles }: { bundles: SetupBundle[] }) {
                 </div>
             </div>
 
-            {/* Bundle tabs */}
-            <div ref={tabsRef} className="flex gap-2 mt-5 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+            {/* Bundle tabs with progress indicator */}
+            <div
+                ref={tabsRef}
+                className="flex gap-2 mt-5 mb-6 overflow-x-auto pb-2 scrollbar-hide"
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
+            >
                 {bundles.map((bundle, i) => (
                     <button
                         key={i}
-                        onClick={() => { setActiveBundle(i); setSelectedItems(new Set()); }}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${activeBundle === i
+                        onClick={() => handleTabClick(i)}
+                        className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all overflow-hidden ${activeBundle === i
                                 ? "bg-blue-700 text-white shadow-lg shadow-blue-500/20"
                                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                             }`}
                     >
+                        {/* Progress bar under active tab */}
+                        {activeBundle === i && (
+                            <div className="absolute bottom-0 left-0 h-[3px] bg-white/40 rounded-full transition-none" style={{ width: `${progress}%` }} />
+                        )}
                         <span>{bundle.icon}</span>
                         {bundle.title}
                     </button>
                 ))}
             </div>
 
-            {/* Bundle content */}
-            <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+            {/* Bundle content with fade transition */}
+            <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm animate-fadeIn" key={activeBundle}>
                 <div className="p-5 md:p-8">
                     <p className="text-sm text-gray-600 mb-6">{currentBundle.description}</p>
 

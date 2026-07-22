@@ -10,6 +10,10 @@ import { Header } from "@/components/Header";
 import { FloatingElements } from "@/components/FloatingElements";
 import { CartDrawer } from "@/components/CartDrawer";
 import { ProductCard } from "@/components/ProductCard";
+import { QuickBuyBar } from "@/components/QuickBuyBar";
+import { ShakeToast } from "@/components/ShakeToast";
+import { useShakeToCompare } from "@/hooks/useShakeToCompare";
+import { useRecentlyViewedStore } from "@/store/recentlyViewedStore";
 // Uses API route instead of direct Supabase calls
 import { useCartStore } from "@/store/cartStore";
 import { Product, Inventory, formatPrice, formatDiscount, getProductImage, CATEGORY_MAP } from "@/lib/types";
@@ -27,6 +31,8 @@ export default function ProductDetailPage() {
 
     const addItem = useCartStore((s) => s.addItem);
 
+    const addRecentlyViewed = useRecentlyViewedStore((s) => s.addItem);
+
     useEffect(() => {
         async function load() {
             setLoading(true);
@@ -38,6 +44,8 @@ export default function ProductDetailPage() {
                         setProduct(data.product);
                         setInventory(data.inventory);
                         setRelated(data.related || []);
+                        // Track recently viewed
+                        addRecentlyViewed(data.product);
                     }
                 }
             } catch (err) {
@@ -46,7 +54,13 @@ export default function ProductDetailPage() {
             setLoading(false);
         }
         load();
-    }, [slug]);
+    }, [slug, addRecentlyViewed]);
+
+    // Shake to compare (mobile)
+    const { shakeDetected, isComparing } = useShakeToCompare({
+        product: product || { id: 0, item_code: "", product_name: "", category: "", selling_price: 0, compare_price: null, slug: "", image_url: null, description: null, is_active: true, created_at: "" },
+        enabled: !!product,
+    });
 
     const handleAddToCart = () => {
         if (!product) return;
@@ -291,6 +305,10 @@ export default function ProductDetailPage() {
 
                 
                 <FloatingElements />
+                {/* Quick Buy Floating Bar (mobile) */}
+                <QuickBuyBar product={product} />
+                {/* Shake to Compare Toast */}
+                <ShakeToast visible={shakeDetected} isComparing={isComparing} />
             </div>
         </>
     );

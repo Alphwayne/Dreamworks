@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { GlobalOverlays } from "@/components/GlobalOverlays";
 import "./globals.css";
 
 const inter = Inter({
@@ -45,7 +46,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://lzlqbhxwfcnkptqphmms.supabase.co" />
         <link rel="dns-prefetch" href="https://lzlqbhxwfcnkptqphmms.supabase.co" />
       </head>
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">{children}<GlobalOverlays /></body>
     </html>
   );
 }

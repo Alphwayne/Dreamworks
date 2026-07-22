@@ -11,6 +11,7 @@ import { DealOfTheDay } from "@/components/DealOfTheDay";
 import { CompleteYourSetup } from "@/components/CompleteYourSetup";
 import { TrendingNow } from "@/components/TrendingNow";
 import { JustLaunched } from "@/components/JustLaunched";
+import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { getProducts } from "@/lib/api/products";
 import Link from "next/link";
 import {
@@ -35,6 +36,7 @@ const BLOG_PREVIEWS = [
     likes: 47,
     bg: "from-blue-800 to-indigo-900",
     emoji: "⚽",
+    image: "/blog/world-cup-tech.jpg",
   },
   {
     slug: "dreamworks-trusted-technology-partner",
@@ -47,6 +49,7 @@ const BLOG_PREVIEWS = [
     likes: 32,
     bg: "from-blue-800 to-blue-900",
     emoji: "🏪",
+    image: "/blog/dreamworks-partner.jpg",
   },
   {
     slug: "buy-one-get-one-free-deals",
@@ -59,6 +62,7 @@ const BLOG_PREVIEWS = [
     likes: 63,
     bg: "from-indigo-700 to-blue-900",
     emoji: "🎁",
+    image: "/blog/tech-deals-bogo.jpg",
   },
 ];
 
@@ -380,6 +384,9 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* === RECENTLY VIEWED === */}
+        <RecentlyViewed />
+
         {/* === EXISTING: BLOG PREVIEWS === */}
         <section className="py-14 px-4 max-w-7xl mx-auto">
           <div className="flex items-start justify-between mb-8">
@@ -400,8 +407,12 @@ export default async function Home() {
               <Link key={post.slug} href={`/blog/${post.slug}`} className="group block">
                 <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 hover:-translate-y-1">
                   <div className={`relative h-44 bg-gradient-to-br ${post.bg} overflow-hidden`}>
-                    <div className="absolute inset-0 flex items-center justify-center opacity-10 text-8xl">{post.emoji}</div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    {post.image ? (
+                      <img src={post.image} alt={post.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-10 text-8xl">{post.emoji}</div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute top-3 left-3">
                       <span className={`${post.categoryColor} text-white text-[10px] font-bold px-2.5 py-1 rounded-full`}>
                         {post.category}
