@@ -12,6 +12,7 @@ import { CompleteYourSetup } from "@/components/CompleteYourSetup";
 import { TrendingNow } from "@/components/TrendingNow";
 import { JustLaunched } from "@/components/JustLaunched";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
+import { HPAuthorized } from "@/components/HPAuthorized";
 import { getProducts } from "@/lib/api/products";
 import Link from "next/link";
 import {
@@ -290,6 +291,9 @@ export default async function Home() {
         <JustLaunched products={justLaunched} />
 
         <BrandStrip />
+
+        {/* === HP AUTHORIZED PARTNER === */}
+        <HPAuthorized />
 
         {/* === NEW: TRENDING NOW === */}
         <TrendingNow products={trendingProducts} />

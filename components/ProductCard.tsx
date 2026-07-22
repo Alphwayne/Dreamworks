@@ -1,7 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, Eye, Heart, Star, ArrowLeftRight } from "lucide-react";
+import { ShoppingCart, Eye, Heart, Star } from "lucide-react";
+
+// Custom compare icon — split-screen side-by-side view
+function CompareIcon({ size = 12 }: { size?: number }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <rect x="1" y="2" width="5.5" height="12" rx="1.5" />
+            <rect x="9.5" y="2" width="5.5" height="12" rx="1.5" />
+            <path d="M4 5.5h-0.5M4 8h-0.5M4 10.5h-0.5" strokeWidth="1" />
+            <path d="M12.5 5.5h-0.5M12.5 8h-0.5M12.5 10.5h-0.5" strokeWidth="1" />
+        </svg>
+    );
+}
 import { Product, formatPrice, formatDiscount, getProductImage } from "@/lib/types";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
@@ -111,7 +123,7 @@ export function ProductCard({ product }: ProductCardProps) {
                                     : "bg-white/90 hover:bg-white"
                                     }`}
                             >
-                                <ArrowLeftRight size={12} className={comparing ? "text-white" : "text-gray-600"} />
+                                <CompareIcon size={12} />
                             </button>
                         </div>
 

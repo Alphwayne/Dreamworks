@@ -1,7 +1,19 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MessageCircle, X, Send, User, Bot, Loader2, UserCircle } from "lucide-react";
+import { X, Send, User, Loader2, UserCircle } from "lucide-react";
+
+// Custom DreamGuide icon — a compass/guide symbol
+function DreamGuideIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke="currentColor" strokeWidth="1" opacity="0.4" />
+            <path d="M9.5 14.5l-1-6 6-1-1 6-4 1z" fill="currentColor" opacity="0.9" />
+            <circle cx="12" cy="12" r="1.5" fill="white" />
+        </svg>
+    );
+}
 
 interface Message {
     id: string;
@@ -12,9 +24,9 @@ interface Message {
 
 const SUGGESTED_QUESTIONS = [
     "What products do you sell?",
+    "Help me find the right laptop",
+    "I have a budget, what can I get?",
     "Do you deliver nationwide?",
-    "How does Dream Now Pay Later work?",
-    "What's your return policy?",
     "How do DreamPoints work?",
 ];
 
@@ -53,7 +65,7 @@ export function ChatBot() {
                 {
                     id: "welcome",
                     role: "assistant",
-                    content: "Hi there! 👋 I'm DreamBot, your AI shopping assistant. How can I help you today? I can help with product recommendations, pricing, delivery info, and more!",
+                    content: "Hi there! I'm DreamGuide, your personal shopping companion. Whether you know exactly what you want or need help figuring it out — I'm here. Ask me about products, pricing, delivery, or let me help you find the perfect tech for your needs.",
                     timestamp: new Date(),
                 },
             ]);
@@ -151,18 +163,18 @@ export function ChatBot() {
             {!isOpen && (
                 <button
                     onClick={handleOpen}
-                    title="Chat with DreamBot"
+                    title="Chat with DreamGuide"
                     className="fixed bottom-5 right-3 sm:bottom-5 sm:right-4 z-50 flex items-center gap-2.5 bg-gradient-to-r from-blue-800 to-blue-500 text-white px-3 py-2.5 rounded-2xl shadow-xl shadow-blue-600/30 hover:shadow-blue-600/50 transition-all hover:scale-105 hover:-translate-y-0.5 group"
                 >
                     <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
-                        <MessageCircle size={18} className="text-white fill-white/30" />
+                        <DreamGuideIcon size={18} className="text-white" />
                     </div>
                     <div className="text-left hidden sm:block">
-                        <p className="text-xs font-bold leading-none">AI Chat</p>
-                        <p className="text-[10px] text-blue-100 leading-none mt-0.5">Ask us anything</p>
+                        <p className="text-xs font-bold leading-none">DreamGuide</p>
+                        <p className="text-[10px] text-blue-100 leading-none mt-0.5">Your shopping companion</p>
                     </div>
                     <div className="text-left block sm:hidden">
-                        <p className="text-xs font-bold leading-none">Chat</p>
+                        <p className="text-xs font-bold leading-none">Guide</p>
                     </div>
                     {/* Pulse indicator */}
                     <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse" />
@@ -176,13 +188,13 @@ export function ChatBot() {
                     <div className="bg-gradient-to-r from-blue-800 to-blue-600 px-4 py-3 flex items-center justify-between flex-shrink-0">
                         <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-                                <Bot size={20} className="text-white" />
+                                <DreamGuideIcon size={20} className="text-white" />
                             </div>
                             <div>
-                                <p className="text-white font-bold text-sm">DreamBot</p>
+                                <p className="text-white font-bold text-sm">DreamGuide</p>
                                 <div className="flex items-center gap-1.5">
                                     <span className="w-2 h-2 bg-green-400 rounded-full" />
-                                    <p className="text-blue-100 text-xs">Online • AI Assistant</p>
+                                    <p className="text-blue-100 text-xs">Online • Shopping Companion</p>
                                 </div>
                             </div>
                         </div>
@@ -203,7 +215,7 @@ export function ChatBot() {
                             >
                                 {msg.role === "assistant" && (
                                     <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                        <Bot size={14} className="text-blue-600" />
+                                        <DreamGuideIcon size={14} className="text-blue-600" />
                                     </div>
                                 )}
                                 <div
@@ -227,7 +239,7 @@ export function ChatBot() {
                         {isLoading && (
                             <div className="flex gap-2 justify-start">
                                 <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                    <Bot size={14} className="text-blue-600" />
+                                    <DreamGuideIcon size={14} className="text-blue-600" />
                                 </div>
                                 <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-md shadow-sm border border-gray-100">
                                     <div className="flex gap-1.5">
