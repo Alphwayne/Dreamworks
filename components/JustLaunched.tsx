@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Zap, Eye, Heart } from "lucide-react";
+import { ArrowRight, Eye, Heart } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatPrice } from "@/lib/types";
@@ -20,26 +20,27 @@ interface NewProduct {
     created_at: string;
 }
 
-// Custom animated flame SVG
-function AnimatedFlame({ className = "" }: { className?: string }) {
+// Custom animated launch icon — rocket with exhaust trail
+function AnimatedLaunchIcon({ className = "" }: { className?: string }) {
     return (
         <div className={`relative ${className}`}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="animate-flicker">
-                <path
-                    d="M12 2C12 2 4 8 4 14C4 18.4183 7.58172 22 12 22C16.4183 22 20 18.4183 20 14C20 8 12 2 12 2Z"
-                    className="fill-orange-400"
-                />
-                <path
-                    d="M12 6C12 6 8 10 8 14C8 16.2091 9.79086 18 12 18C14.2091 18 16 16.2091 16 14C16 10 12 6 12 6Z"
-                    className="fill-yellow-300"
-                />
-                <path
-                    d="M12 10C12 10 10 12 10 14C10 15.1046 10.8954 16 12 16C13.1046 16 14 15.1046 14 14C14 12 12 10 12 10Z"
-                    className="fill-white/80"
-                />
+                {/* Rocket body */}
+                <path d="M12 2L8 10h8L12 2z" fill="white" opacity="0.95" />
+                <path d="M9 10v5c0 1 1.5 2 3 2s3-1 3-2v-5H9z" fill="white" opacity="0.9" />
+                {/* Fins */}
+                <path d="M9 12l-2 4h2v-4z" fill="white" opacity="0.7" />
+                <path d="M15 12l2 4h-2v-4z" fill="white" opacity="0.7" />
+                {/* Window */}
+                <circle cx="12" cy="10" r="1.5" fill="#3B82F6" />
+                {/* Exhaust flames */}
+                <path d="M10 17l2 5 2-5" fill="#FCD34D" className="animate-pulse" />
+                <path d="M11 17l1 3.5 1-3.5" fill="#FB923C" />
             </svg>
             {/* Glow effect */}
-            <div className="absolute inset-0 rounded-full bg-orange-400/30 blur-md animate-pulse" />
+            <div className="absolute inset-0 rounded-full bg-orange-400/20 blur-lg animate-pulse" />
+            {/* Exhaust particles */}
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-yellow-400 rounded-full animate-ping opacity-60" />
         </div>
     );
 }
@@ -83,7 +84,7 @@ export function JustLaunched({ products }: { products: NewProduct[] }) {
             {/* Header with animated flame */}
             <div className="flex items-center gap-3 mb-6">
                 <div className="relative w-11 h-11 bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30">
-                    <AnimatedFlame />
+                    <AnimatedLaunchIcon />
                     {/* Particle sparks */}
                     <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-ping opacity-75" />
                     <div className="absolute -top-0.5 left-0 w-1.5 h-1.5 bg-orange-300 rounded-full animate-ping opacity-60" style={{ animationDelay: "0.5s" }} />
@@ -105,8 +106,8 @@ export function JustLaunched({ products }: { products: NewProduct[] }) {
                         <div className="relative h-full min-h-[360px] bg-gradient-to-br from-blue-50 via-indigo-50 to-sky-50 rounded-3xl border border-gray-100 overflow-hidden hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
                             {/* Badge */}
                             <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
-                                <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg shadow-orange-500/30">
-                                    <Zap size={10} /> NEW DROP
+                                <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg shadow-orange-500/30 uppercase tracking-wider">
+                                    New Drop
                                 </span>
                                 <span className="bg-white/80 backdrop-blur-sm text-gray-600 text-[10px] font-semibold px-2.5 py-1.5 rounded-full">
                                     {new Date(hero.created_at).toLocaleDateString("en-NG", { month: "short", day: "numeric" })}
@@ -180,8 +181,8 @@ export function JustLaunched({ products }: { products: NewProduct[] }) {
                                         loading="lazy"
                                         className="object-contain p-3 group-hover:scale-110 transition-transform duration-500"
                                     />
-                                    <span className="absolute top-2 left-2 bg-gradient-to-r from-orange-500 to-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
-                                        <Zap size={8} /> NEW
+                                    <span className="absolute top-2 left-2 bg-gradient-to-r from-orange-500 to-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                                        New
                                     </span>
                                 </div>
 

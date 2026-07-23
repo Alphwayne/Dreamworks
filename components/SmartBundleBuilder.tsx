@@ -97,7 +97,7 @@ export function SmartBundleBuilder() {
     };
 
     return (
-        <div className="fixed bottom-24 right-4 z-40 w-[340px] max-h-[420px] hidden sm:block animate-slideUp">
+        <div className="fixed bottom-24 right-4 z-40 w-[320px] max-h-[360px] hidden sm:block animate-slideUp">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-2xl shadow-black/8 overflow-hidden">
                 {/* Header — brand gradient, mature */}
                 <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-700 px-4 py-3.5 flex items-center justify-between">
@@ -142,7 +142,7 @@ export function SmartBundleBuilder() {
                 )}
 
                 {/* Suggestions — clean list */}
-                <div className="p-3 space-y-1 max-h-[260px] overflow-y-auto">
+                <div className="p-2.5 space-y-0.5 max-h-[180px] overflow-y-auto">
                     {loading ? (
                         <div className="flex items-center justify-center py-8">
                             <div className="w-5 h-5 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin" />
@@ -180,7 +180,7 @@ export function SmartBundleBuilder() {
                                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold flex-shrink-0 transition-all ${
                                             isAdded
                                                 ? "bg-gray-100 text-gray-500"
-                                                : "bg-gray-900 text-white hover:bg-gray-800 active:scale-95"
+                                                : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 active:scale-95"
                                         }`}
                                     >
                                         {isAdded ? (
@@ -199,11 +199,21 @@ export function SmartBundleBuilder() {
                     )}
                 </div>
 
-                {/* Footer — subtle */}
-                <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/50">
-                    <p className="text-[10px] text-gray-400 text-center">
-                        Suggestions based on items in your cart
-                    </p>
+                {/* Footer — Add All button */}
+                <div className="px-3 py-2.5 border-t border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                    <button
+                        onClick={() => suggestions.slice(0, 4).forEach((p) => handleAddBundle(p))}
+                        className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-xs px-4 py-2 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all active:scale-[0.98]"
+                    >
+                        <ShoppingCart size={12} />
+                        Add All to Cart
+                    </button>
+                    <button
+                        onClick={() => setDismissed(true)}
+                        className="text-[10px] text-gray-400 hover:text-gray-600 font-medium px-2 py-2 transition-colors"
+                    >
+                        Dismiss
+                    </button>
                 </div>
             </div>
         </div>

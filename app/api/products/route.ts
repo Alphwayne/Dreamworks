@@ -72,7 +72,12 @@ export async function GET(request: NextRequest) {
         }
 
         if (brand) {
-            query = query.ilike("product_name", `%${brand}%`);
+            // For short brand names like HP, use stricter matching
+            if (brand.length <= 3) {
+                query = query.or(`product_name.ilike.${brand} %,product_name.ilike.% ${brand} %,product_name.ilike.% ${brand}`);
+            } else {
+                query = query.ilike("product_name", `%${brand}%`);
+            }
         }
 
         // Tech setup preset filtering - use OR search across keywords

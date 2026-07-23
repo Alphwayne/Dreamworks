@@ -3,7 +3,7 @@
 import { useCompareStore } from "@/store/compareStore";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice, getProductImage } from "@/lib/types";
-import { X, ShoppingCart, ArrowLeftRight, Trash2, Ruler } from "lucide-react";
+import { X, ShoppingCart, Trash2, Ruler } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Header } from "@/components/Header";
@@ -22,7 +22,7 @@ export default function ComparePage() {
                 <main className="min-h-screen bg-gray-50 pt-32 pb-20 px-4">
                     <div className="max-w-4xl mx-auto text-center">
                         <div className="w-20 h-20 bg-indigo-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                            <ArrowLeftRight size={32} className="text-indigo-500" />
+                            <svg width={32} height={32} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-500"><path d="M10 2v16" /><path d="M3 5l7-3 7 3" /><path d="M3 5l-1 6h5L6 5" /><path d="M14 5l1 6h5l-1-6" /><circle cx="3" cy="5" r="0.5" fill="currentColor" /><circle cx="17" cy="5" r="0.5" fill="currentColor" /><path d="M2 11a2 2 0 004 0" /><path d="M15 11a2 2 0 004 0" /><rect x="8.5" y="16" width="3" height="2" rx="1" fill="currentColor" opacity="0.3" /></svg>
                         </div>
                         <h1 className="text-2xl font-bold text-gray-900 mb-3">Compare Products</h1>
                         <p className="text-gray-500 mb-8">Add products to compare by clicking the compare icon on product cards.</p>
@@ -72,7 +72,7 @@ export default function ComparePage() {
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-3">
                             <div className="w-11 h-11 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                                <ArrowLeftRight size={20} className="text-white" />
+                                <svg width={20} height={20} viewBox="0 0 20 20" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v16" /><path d="M3 5l7-3 7 3" /><path d="M3 5l-1 6h5L6 5" /><path d="M14 5l1 6h5l-1-6" /><path d="M2 11a2 2 0 004 0" /><path d="M15 11a2 2 0 004 0" /><rect x="8.5" y="16" width="3" height="2" rx="1" fill="white" opacity="0.3" /></svg>
                             </div>
                             <div>
                                 <h1 className="text-xl md:text-2xl font-bold text-gray-900">Compare Products</h1>

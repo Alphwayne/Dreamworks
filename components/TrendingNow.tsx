@@ -3,7 +3,7 @@
 import { TrendingUp, Flame, Eye, Heart } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { formatPrice } from "@/lib/types";
+import { formatPrice, getProductImage } from "@/lib/types";
 import { useRef, useEffect, useCallback, useState } from "react";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { useCompareStore } from "@/store/compareStore";
@@ -188,7 +188,7 @@ export function TrendingNow({ products }: { products: TrendingProduct[] }) {
                                             {/* Image */}
                                             <div className="relative h-44 bg-gradient-to-br from-gray-50 to-blue-50/20 p-4">
                                                 <Image
-                                                    src={product.image_url || "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&q=75"}
+                                                    src={getProductImage(product as any)}
                                                     alt={product.product_name}
                                                     fill
                                                     className="object-contain p-3 group-hover:scale-110 transition-transform duration-500"

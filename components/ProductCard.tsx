@@ -106,31 +106,31 @@ export function ProductCard({ product }: ProductCardProps) {
                             <button
                                 onClick={handleLike}
                                 title={liked ? "Remove from Wishlist" : "Add to Wishlist"}
-                                className={`w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-lg border border-white/30 shadow-lg transition-all duration-300 hover:scale-110 ${liked
+                                className={`w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-lg border border-white/30 shadow-lg transition-all duration-300 hover:scale-110 ${liked
                                     ? "bg-red-500 border-red-400"
                                     : "bg-white/90 hover:bg-white"
                                     }`}
                             >
-                                <Heart size={13} className={liked ? "text-white fill-white" : "text-gray-600"} />
+                                <Heart size={16} className={liked ? "text-white fill-white" : "text-gray-600"} />
                             </button>
                             {/* Quick Preview */}
                             <button
                                 onClick={handlePreview}
                                 title="Quick Preview"
-                                className="w-8 h-8 rounded-full bg-white/90 backdrop-blur-lg border border-white/30 flex items-center justify-center hover:bg-blue-500 hover:text-white hover:border-blue-400 hover:scale-110 transition-all duration-300 shadow-lg"
+                                className="w-9 h-9 rounded-full bg-white/90 backdrop-blur-lg border border-white/30 flex items-center justify-center hover:bg-blue-500 hover:text-white hover:border-blue-400 hover:scale-110 transition-all duration-300 shadow-lg"
                             >
-                                <Eye size={13} className="text-gray-600 group-hover/btn:text-white" />
+                                <Eye size={16} className="text-gray-600 group-hover/btn:text-white" />
                             </button>
                             {/* Compare */}
                             <button
                                 onClick={handleCompare}
                                 title={comparing ? "Remove from Compare" : "Add to Compare"}
-                                className={`w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-lg border border-white/30 shadow-lg transition-all duration-300 hover:scale-110 ${comparing
+                                className={`w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-lg border border-white/30 shadow-lg transition-all duration-300 hover:scale-110 ${comparing
                                     ? "bg-indigo-500 border-indigo-400"
                                     : "bg-white/90 hover:bg-white"
                                     }`}
                             >
-                                <CompareIcon size={12} />
+                                <CompareIcon size={16} />
                             </button>
                         </div>
 
