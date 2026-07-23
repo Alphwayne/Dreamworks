@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Smartphone } from "lucide-react";
+import { Smartphone } from "lucide-react";
 
 interface ShakeToastProps {
     visible: boolean;
@@ -18,7 +18,7 @@ export function ShakeToast({ visible, isComparing }: ShakeToastProps) {
                     : "bg-red-500/95 border-red-400/50 text-white"
             }`}>
                 <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                    <ArrowLeftRight size={14} />
+                    <svg width={14} height={14} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v16" /><path d="M3 5l7-3 7 3" /><path d="M3 5l-1 6h5L6 5" /><path d="M14 5l1 6h5l-1-6" /><path d="M2 11a2 2 0 004 0" /><path d="M15 11a2 2 0 004 0" /></svg>
                 </div>
                 <div>
                     <p className="text-xs font-bold">

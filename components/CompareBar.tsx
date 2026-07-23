@@ -1,7 +1,7 @@
 "use client";
 
 import { useCompareStore } from "@/store/compareStore";
-import { ArrowLeftRight, X } from "lucide-react";
+import { X } from "lucide-react";
 import Link from "next/link";
 import { getProductImage } from "@/lib/types";
 
@@ -43,7 +43,7 @@ export function CompareBar() {
                     href="/compare"
                     className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all hover:scale-[1.02]"
                 >
-                    <ArrowLeftRight size={13} />
+                    <svg width={13} height={13} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v16" /><path d="M3 5l7-3 7 3" /><path d="M3 5l-1 6h5L6 5" /><path d="M14 5l1 6h5l-1-6" /><path d="M2 11a2 2 0 004 0" /><path d="M15 11a2 2 0 004 0" /></svg>
                     Compare ({items.length})
                 </Link>
 

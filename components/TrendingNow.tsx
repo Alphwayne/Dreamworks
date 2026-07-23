@@ -21,11 +21,16 @@ interface TrendingProduct {
 // Custom compare icon (split-screen style)
 function CompareIcon({ size = 14 }: { size?: number }) {
     return (
-        <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-            <rect x="1" y="2" width="5.5" height="12" rx="1.5" />
-            <rect x="9.5" y="2" width="5.5" height="12" rx="1.5" />
-            <path d="M4 5.5h-0.5M4 8h-0.5M4 10.5h-0.5" strokeWidth="1" />
-            <path d="M12.5 5.5h-0.5M12.5 8h-0.5M12.5 10.5h-0.5" strokeWidth="1" />
+        <svg width={size} height={size} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 2v16" />
+            <path d="M3 5l7-3 7 3" />
+            <path d="M3 5l-1 6h5L6 5" />
+            <path d="M14 5l1 6h5l-1-6" />
+            <circle cx="3" cy="5" r="0.5" fill="currentColor" />
+            <circle cx="17" cy="5" r="0.5" fill="currentColor" />
+            <path d="M2 11a2 2 0 004 0" />
+            <path d="M15 11a2 2 0 004 0" />
+            <rect x="8.5" y="16" width="3" height="2" rx="1" fill="currentColor" opacity="0.3" />
         </svg>
     );
 }

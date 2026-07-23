@@ -62,7 +62,7 @@ export function HPAuthorized() {
                         </div>
 
                         <Link
-                            href="/collections/all?category=Computing+%26+Laptops"
+                            href="/collections/all?brand=HP"
                             className="inline-flex items-center gap-2 bg-white text-gray-900 font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-gray-100 transition-colors"
                         >
                             Shop HP Products

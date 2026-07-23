@@ -292,9 +292,6 @@ export default async function Home() {
 
         <BrandStrip />
 
-        {/* === HP AUTHORIZED PARTNER === */}
-        <HPAuthorized />
-
         {/* === NEW: TRENDING NOW === */}
         <TrendingNow products={trendingProducts} />
 
@@ -317,6 +314,9 @@ export default async function Home() {
 
         {/* === NEW: DEAL OF THE DAY === */}
         <DealOfTheDay product={dealOfTheDay} />
+
+        {/* === HP AUTHORIZED PARTNER === */}
+        <HPAuthorized />
 
         {/* === EXISTING: MEDIA SHOWCASE === */}
         <MediaShowcase />

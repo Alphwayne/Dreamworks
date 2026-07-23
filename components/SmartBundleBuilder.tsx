@@ -99,8 +99,8 @@ export function SmartBundleBuilder() {
     return (
         <div className="fixed bottom-24 right-4 z-40 w-[340px] max-h-[420px] hidden sm:block animate-slideUp">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-2xl shadow-black/8 overflow-hidden">
-                {/* Header — clean, mature */}
-                <div className="bg-gray-900 px-4 py-3.5 flex items-center justify-between">
+                {/* Header — brand gradient, mature */}
+                <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-700 px-4 py-3.5 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         {/* Custom bundle icon */}
                         <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">

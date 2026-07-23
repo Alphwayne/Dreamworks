@@ -55,6 +55,16 @@ What started as a small technology shop in Lagos has grown into Nigeria's premie
 We're constantly expanding our catalogue, improving our delivery network, and building new ways for customers to engage with us. The future of tech retail in Nigeria is digital, fast, and customer-first — and Dreamworks Direct is leading the charge.
 `;
 
+// Fallback images for blog posts by slug
+const BLOG_IMAGES: Record<string, string> = {
+    "world-cup-2026-tech-showcase": "/blog/world-cup-tech.jpg",
+    "dreamworks-trusted-technology-partner": "/blog/dreamworks-partner.jpg",
+    "buy-one-get-one-free-deals": "/blog/tech-deals-bogo.jpg",
+    "dreamworks-no1-hp-store-nigeria": "/blog/dreamworks-partner.jpg",
+    "hp-devices-technology-work-live": "/blog/dreamworks-partner.jpg",
+    "top-5-smart-home-devices-2026": "/blog/tech-deals-bogo.jpg",
+};
+
 // Generate a persistent visitor ID for like tracking
 function getVisitorId(): string {
     if (typeof window === "undefined") return "";
@@ -311,8 +321,8 @@ export default function BlogPostPage() {
                     <article className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm mb-8">
                         {/* Hero */}
                         <div className="h-64 md:h-80 relative overflow-hidden">
-                            {post?.thumbnail ? (
-                                <Image src={post.thumbnail} alt={displayTitle} fill className="object-cover" />
+                            {(post?.thumbnail || BLOG_IMAGES[slug]) ? (
+                                <Image src={post?.thumbnail || BLOG_IMAGES[slug]} alt={displayTitle} fill className="object-cover" />
                             ) : (
                                 <div className="absolute inset-0 bg-gradient-to-br from-blue-800 via-blue-900 to-purple-900">
                                     <div className="absolute inset-0 flex items-center justify-center opacity-10">

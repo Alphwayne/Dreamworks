@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
     Search, ShoppingBag, User, Menu, ChevronDown,
-    LogIn, UserPlus, ChevronRight, X, ChevronUp
+    LogIn, UserPlus, ChevronRight, X, ChevronUp, Heart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect, useRef } from "react";
 import { useCartStore } from "@/store/cartStore";
+import { useWishlistStore } from "@/store/wishlistStore";
 import { formatPrice, CATEGORY_MAP, Product } from "@/lib/types";
 
 // ─── NAVIGATION DATA ─────────────────────────────────────────────
@@ -141,6 +142,7 @@ const rollingMessages = [
 export function Header() {
     const router = useRouter();
     const { getTotalPrice, getTotalItems, openCart } = useCartStore();
+    const wishlistCount = useWishlistStore((s) => s.items.length);
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => { setMounted(true); }, []);
@@ -180,14 +182,14 @@ export function Header() {
         if (!searchQuery.trim()) { setSearchResults([]); setShowResults(false); return; }
         const timer = setTimeout(async () => {
             try {
-                const res = await fetch(`/api/products?search=${encodeURIComponent(searchQuery)}&limit=5`);
+                const res = await fetch(`/api/products?search=${encodeURIComponent(searchQuery)}&limit=6`);
                 const json = await res.json();
                 setSearchResults(json.products || []);
                 setShowResults(true);
             } catch (err) {
                 console.error("Header search error:", err);
             }
-        }, 300);
+        }, 150);
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
@@ -241,33 +243,54 @@ export function Header() {
                                     onFocus={() => searchResults.length > 0 && setShowResults(true)}
                                 />
                             </form>
-                            {showResults && searchResults.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
-                                    {searchResults.map((product) => (
-                                        <Link
-                                            key={product.id}
-                                            href={`/products/${product.slug}`}
-                                            onClick={() => { setShowResults(false); setSearchQuery(""); }}
-                                            className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors"
-                                        >
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-900 truncate">{product.product_name}</p>
-                                                <p className="text-xs text-gray-400">{product.category}</p>
+                            {showResults && searchQuery.trim() && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl shadow-black/15 border border-gray-100 overflow-hidden z-50">
+                                    {searchResults.length > 0 ? (
+                                        <>
+                                            <div className="px-4 py-2 border-b border-gray-50">
+                                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Suggestions</p>
                                             </div>
-                                            <p className="text-sm font-bold text-blue-600 flex-shrink-0">
-                                                {formatPrice(product.selling_price)}
-                                            </p>
-                                        </Link>
-                                    ))}
-                                    <Link
-                                        href={`/search?q=${encodeURIComponent(searchQuery)}`}
-                                        onClick={() => setShowResults(false)}
-                                        className="block px-4 py-3 text-sm text-center text-blue-600 font-semibold bg-blue-50 hover:bg-blue-100 transition-colors"
-                                    >
-                                        See all results for "{searchQuery}"
-                                    </Link>
+                                            {searchResults.map((product) => (
+                                                <Link
+                                                    key={product.id}
+                                                    href={`/products/${product.slug}`}
+                                                    onClick={() => { setShowResults(false); setSearchQuery(""); }}
+                                                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50/80 transition-colors group/item"
+                                                >
+                                                    <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                        <img
+                                                            src={product.image_url || "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=60&q=50"}
+                                                            alt=""
+                                                            className="w-8 h-8 object-contain"
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-gray-900 truncate group-hover/item:text-blue-600 transition-colors">{product.product_name}</p>
+                                                        <p className="text-[11px] text-gray-400">{product.category}</p>
+                                                    </div>
+                                                    <p className="text-sm font-bold text-blue-600 flex-shrink-0">
+                                                        {formatPrice(product.selling_price)}
+                                                    </p>
+                                                </Link>
+                                            ))}
+                                            <Link
+                                                href={`/search?q=${encodeURIComponent(searchQuery)}`}
+                                                onClick={() => setShowResults(false)}
+                                                className="flex items-center justify-center gap-2 px-4 py-3 text-sm text-blue-600 font-semibold bg-blue-50/50 hover:bg-blue-100/70 transition-colors border-t border-gray-50"
+                                            >
+                                                <Search className="w-3.5 h-3.5" />
+                                                See all results for &ldquo;{searchQuery}&rdquo;
+                                            </Link>
+                                        </>
+                                    ) : (
+                                        <div className="px-4 py-6 text-center">
+                                            <p className="text-sm text-gray-500">No products found for &ldquo;{searchQuery}&rdquo;</p>
+                                            <p className="text-xs text-gray-400 mt-1">Try a different keyword</p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
+
                         </div>
                     </div>
 
@@ -324,6 +347,15 @@ export function Header() {
 
                         <Link href="/auth/signin" className="lg:hidden p-2 hover:bg-blue-50 rounded-full transition-colors">
                             <User className="w-5 h-5 text-gray-600" />
+                        </Link>
+
+                        <Link href="/wishlist" className="relative group p-2 hover:bg-red-50 rounded-full transition-colors hidden sm:flex items-center justify-center">
+                            <Heart className="w-5 h-5 text-gray-600 group-hover:text-red-500 transition-colors" />
+                            {mounted && wishlistCount > 0 && (
+                                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[8px] rounded-full flex items-center justify-center font-bold">
+                                    {wishlistCount}
+                                </span>
+                            )}
                         </Link>
 
                         <button onClick={openCart} className="relative group">
@@ -560,24 +592,49 @@ export function Header() {
                                 Go
                             </button>
                         </form>
-                        {showResults && searchResults.length > 0 && (
+                        {showResults && searchQuery.trim() && (
                             <div className="mt-2 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-                                {searchResults.map((product) => (
-                                    <Link
-                                        key={product.id}
-                                        href={`/products/${product.slug}`}
-                                        onClick={() => { setShowResults(false); setSearchQuery(""); setMobileSearchOpen(false); }}
-                                        className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors"
-                                    >
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 truncate">{product.product_name}</p>
-                                            <p className="text-xs text-gray-400">{product.category}</p>
+                                {searchResults.length > 0 ? (
+                                    <>
+                                        <div className="px-3 py-1.5 border-b border-gray-50">
+                                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Suggestions</p>
                                         </div>
-                                        <p className="text-sm font-bold text-blue-600 flex-shrink-0">
-                                            {formatPrice(product.selling_price)}
-                                        </p>
-                                    </Link>
-                                ))}
+                                        {searchResults.map((product) => (
+                                            <Link
+                                                key={product.id}
+                                                href={`/products/${product.slug}`}
+                                                onClick={() => { setShowResults(false); setSearchQuery(""); setMobileSearchOpen(false); }}
+                                                className="flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 transition-colors"
+                                            >
+                                                <div className="w-9 h-9 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                    <img
+                                                        src={product.image_url || "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=60&q=50"}
+                                                        alt=""
+                                                        className="w-7 h-7 object-contain"
+                                                    />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium text-gray-900 truncate">{product.product_name}</p>
+                                                    <p className="text-[11px] text-gray-400">{product.category}</p>
+                                                </div>
+                                                <p className="text-sm font-bold text-blue-600 flex-shrink-0">
+                                                    {formatPrice(product.selling_price)}
+                                                </p>
+                                            </Link>
+                                        ))}
+                                        <Link
+                                            href={`/search?q=${encodeURIComponent(searchQuery)}`}
+                                            onClick={() => { setShowResults(false); setMobileSearchOpen(false); }}
+                                            className="block px-4 py-2.5 text-sm text-center text-blue-600 font-semibold bg-blue-50/50 border-t border-gray-50"
+                                        >
+                                            See all results
+                                        </Link>
+                                    </>
+                                ) : (
+                                    <div className="px-4 py-4 text-center">
+                                        <p className="text-sm text-gray-500">No results for &ldquo;{searchQuery}&rdquo;</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
