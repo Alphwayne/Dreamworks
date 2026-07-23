@@ -164,7 +164,7 @@ export function ChatBot() {
                 <button
                     onClick={handleOpen}
                     title="Chat with DreamGuide"
-                    className="fixed bottom-20 right-3 sm:bottom-5 sm:right-4 z-50 flex items-center gap-2.5 bg-gradient-to-r from-blue-800 to-blue-500 text-white px-3 py-2.5 rounded-2xl shadow-xl shadow-blue-600/30 hover:shadow-blue-600/50 transition-all hover:scale-105 hover:-translate-y-0.5 group"
+                    className="fixed bottom-5 right-3 sm:bottom-5 sm:right-4 z-50 flex items-center gap-2.5 bg-gradient-to-r from-blue-800 to-blue-500 text-white px-3 py-2.5 rounded-2xl shadow-xl shadow-blue-600/30 hover:shadow-blue-600/50 transition-all hover:scale-105 hover:-translate-y-0.5 group"
                 >
                     <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
                         <DreamGuideIcon size={18} className="text-white" />
