@@ -27,7 +27,7 @@ export function FloatingElements() {
             */}
             <button
                 onClick={() => setDreamPointsOpen(true)}
-                className="fixed bottom-5 left-3 sm:bottom-5 sm:left-4 z-50 transition-all hover:scale-105 hover:-translate-y-1 group"
+                className="fixed bottom-4 left-2 sm:bottom-5 sm:left-4 z-40 transition-all hover:scale-105 hover:-translate-y-1 group scale-[0.85] sm:scale-100 origin-bottom-left"
                 title="DreamPoints"
             >
                 <div className="relative flex flex-col items-center">

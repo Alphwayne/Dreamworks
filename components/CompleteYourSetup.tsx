@@ -116,7 +116,7 @@ export function CompleteYourSetup({ bundles }: { bundles: SetupBundle[] }) {
                     <button
                         key={i}
                         onClick={() => handleTabClick(i)}
-                        className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all overflow-hidden ${activeBundle === i
+                        className={`relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all overflow-hidden ${activeBundle === i
                                 ? "bg-blue-700 text-white shadow-lg shadow-blue-500/20"
                                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                             }`}

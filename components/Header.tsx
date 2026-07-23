@@ -349,8 +349,8 @@ export function Header() {
                             <User className="w-5 h-5 text-gray-600" />
                         </Link>
 
-                        <Link href="/wishlist" className="relative group p-2 hover:bg-red-50 rounded-full transition-colors hidden sm:flex items-center justify-center">
-                            <Heart className="w-5 h-5 text-gray-600 group-hover:text-red-500 transition-colors" />
+                        <Link href="/wishlist" className="relative group p-1.5 sm:p-2 hover:bg-red-50 rounded-full transition-colors flex items-center justify-center">
+                            <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 group-hover:text-red-500 transition-colors" />
                             {mounted && wishlistCount > 0 && (
                                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[8px] rounded-full flex items-center justify-center font-bold">
                                     {wishlistCount}

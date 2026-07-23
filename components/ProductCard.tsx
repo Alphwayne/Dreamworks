@@ -100,37 +100,39 @@ export function ProductCard({ product }: ProductCardProps) {
                             </div>
                         )}
 
-                        {/* Action icons - appear on hover, top right */}
-                        <div className="absolute top-3 right-3 z-10 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-3 group-hover:translate-x-0 transition-all duration-400">
+                        {/* Action icons - always visible on mobile, hover on desktop */}
+                        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 flex flex-col gap-1.5 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:translate-x-3 sm:group-hover:translate-x-0 transition-all duration-400">
                             {/* Wishlist */}
                             <button
                                 onClick={handleLike}
                                 title={liked ? "Remove from Wishlist" : "Add to Wishlist"}
-                                className={`w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-lg border border-white/30 shadow-lg transition-all duration-300 hover:scale-110 ${liked
+                                className={`w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center backdrop-blur-lg border border-white/30 shadow-lg transition-all duration-300 hover:scale-110 ${liked
                                     ? "bg-red-500 border-red-400"
                                     : "bg-white/90 hover:bg-white"
                                     }`}
                             >
-                                <Heart size={16} className={liked ? "text-white fill-white" : "text-gray-600"} />
+                                <Heart size={14} className={`sm:hidden ${liked ? "text-white fill-white" : "text-gray-600"}`} />
+                                <Heart size={16} className={`hidden sm:block ${liked ? "text-white fill-white" : "text-gray-600"}`} />
                             </button>
                             {/* Quick Preview */}
                             <button
                                 onClick={handlePreview}
                                 title="Quick Preview"
-                                className="w-9 h-9 rounded-full bg-white/90 backdrop-blur-lg border border-white/30 flex items-center justify-center hover:bg-blue-500 hover:text-white hover:border-blue-400 hover:scale-110 transition-all duration-300 shadow-lg"
+                                className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-white/90 backdrop-blur-lg border border-white/30 flex items-center justify-center hover:bg-blue-500 hover:text-white hover:border-blue-400 hover:scale-110 transition-all duration-300 shadow-lg"
                             >
-                                <Eye size={16} className="text-gray-600 group-hover/btn:text-white" />
+                                <Eye size={14} className="text-gray-600 sm:hidden" />
+                                <Eye size={16} className="text-gray-600 hidden sm:block" />
                             </button>
                             {/* Compare */}
                             <button
                                 onClick={handleCompare}
                                 title={comparing ? "Remove from Compare" : "Add to Compare"}
-                                className={`w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-lg border border-white/30 shadow-lg transition-all duration-300 hover:scale-110 ${comparing
+                                className={`w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center backdrop-blur-lg border border-white/30 shadow-lg transition-all duration-300 hover:scale-110 ${comparing
                                     ? "bg-indigo-500 border-indigo-400"
                                     : "bg-white/90 hover:bg-white"
                                     }`}
                             >
-                                <CompareIcon size={16} />
+                                <CompareIcon size={14} />
                             </button>
                         </div>
 
@@ -151,8 +153,8 @@ export function ProductCard({ product }: ProductCardProps) {
 
                     {/* INFO SECTION */}
                     <div className="p-4 flex flex-col flex-1">
-                        {/* Category tag */}
-                        <div className="flex items-center gap-2 mb-2">
+                        {/* Category tag - hidden on mobile for space */}
+                        <div className="hidden sm:flex items-center gap-2 mb-2">
                             <span className="text-[9px] font-bold text-blue-500 uppercase tracking-[0.15em] bg-blue-50 px-2 py-0.5 rounded-md">
                                 {product.category.split(" ").slice(0, 2).join(" ")}
                             </span>
