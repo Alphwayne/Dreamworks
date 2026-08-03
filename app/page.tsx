@@ -87,12 +87,14 @@ const SELLING_POINTS = [
 // Fetch products with compare_price (deals) — from Shopify
 async function getFlashDeals() {
   try {
-    const { products } = await shopifyGetProducts({ first: 20, sortKey: "CREATED_AT", reverse: true });
+    // Fetch a larger set to find products with compare-at prices (on sale)
+    const { products } = await shopifyGetProducts({ first: 100, sortKey: "CREATED_AT", reverse: true });
     // Filter to products that have a compare-at price (on sale)
-    return products
+    const deals = products
       .map(shopifyToProduct)
-      .filter(p => p.compare_price && p.compare_price > p.selling_price)
-      .slice(0, 10);
+      .filter(p => p.compare_price && p.compare_price > p.selling_price);
+    // Shuffle for variety
+    return deals.sort(() => Math.random() - 0.5).slice(0, 10);
   } catch {
     return [];
   }
@@ -101,10 +103,16 @@ async function getFlashDeals() {
 // Fetch the single best deal for Deal of the Day — from Shopify
 async function getDealOfTheDay() {
   try {
-    const { products } = await shopifyGetProducts({ first: 30, sortKey: "PRICE", reverse: true });
+    const { products } = await shopifyGetProducts({ first: 50, sortKey: "BEST_SELLING", reverse: true });
     const deals = products
       .map(shopifyToProduct)
-      .filter(p => p.compare_price && p.compare_price > p.selling_price);
+      .filter(p => p.compare_price && p.compare_price > p.selling_price)
+      .sort((a, b) => {
+        // Sort by biggest discount percentage
+        const discA = a.compare_price ? (a.compare_price - a.selling_price) / a.compare_price : 0;
+        const discB = b.compare_price ? (b.compare_price - b.selling_price) / b.compare_price : 0;
+        return discB - discA;
+      });
     return deals[0] || null;
   } catch {
     return null;
@@ -122,21 +130,37 @@ async function getTrendingProducts() {
 }
 
 // Fetch just launched (newest) — from Shopify
+// Pull from diverse categories for better variety and flashier display
 async function getJustLaunched() {
   try {
-    const { products } = await shopifyGetProducts({ first: 5, sortKey: "CREATED_AT", reverse: true });
-    return products.map(shopifyToProduct);
+    // Fetch newest products from multiple popular categories for variety
+    const [laptops, phones, electronics, gaming] = await Promise.all([
+      shopifyGetProducts({ first: 4, query: 'tag:"LAPTOPS."', sortKey: "CREATED_AT", reverse: true }),
+      shopifyGetProducts({ first: 4, query: 'tag:"MOBILE PHONES."', sortKey: "CREATED_AT", reverse: true }),
+      shopifyGetProducts({ first: 4, query: 'tag:"TELEVISIONS." OR tag:"AUDIO & VIDEO."', sortKey: "CREATED_AT", reverse: true }),
+      shopifyGetProducts({ first: 3, query: 'tag:"GAMING." OR tag:"CONSOLES."', sortKey: "CREATED_AT", reverse: true }),
+    ]);
+    const all = [
+      ...laptops.products.map(shopifyToProduct),
+      ...phones.products.map(shopifyToProduct),
+      ...electronics.products.map(shopifyToProduct),
+      ...gaming.products.map(shopifyToProduct),
+    ];
+    // Shuffle for variety and pick 8
+    const shuffled = all.sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 8);
   } catch {
     return [];
   }
 }
 
-// Fetch bundle suggestions — from Shopify
+// Fetch bundle suggestions — from Shopify using tag-based queries
 async function getBundles() {
   const bundleConfigs = [
-    { title: "Home Office", icon: "💻", description: "Everything you need for a productive workspace", queries: ["laptop", "monitor", "keyboard mouse"] },
-    { title: "Smart Home", icon: "🏠", description: "Transform your home into a connected space", queries: ["smart home", "security camera", "speaker"] },
-    { title: "Mobile Life", icon: "📱", description: "Stay connected and powered up on the go", queries: ["phone", "power bank", "earbuds"] },
+    { title: "Home Office", icon: "💻", description: "Everything you need for a productive workspace", queries: ['tag:"LAPTOPS."', 'tag:"COMPUTING ACCESSORIES."', 'tag:"PRINTERS."'] },
+    { title: "Smart Home", icon: "🏠", description: "Transform your home into a connected space", queries: ['tag:"SMART HOMES."', 'tag:"SPEAKERS."', 'tag:"STREAMING."'] },
+    { title: "Mobile Life", icon: "📱", description: "Stay connected and powered up on the go", queries: ['tag:"MOBILE PHONES."', 'tag:"POWER BANKS."', 'tag:"HEADPHONES."'] },
+    { title: "Gaming Zone", icon: "🎮", description: "Level up your gaming experience", queries: ['tag:"CONSOLES."', 'tag:"GAMING ACCESSORIES."', 'tag:"HEADPHONES."'] },
   ];
 
   try {
@@ -179,8 +203,19 @@ async function getCatchyProducts() {
 
 async function getMixedProducts() {
   try {
-    const { products } = await shopifyGetProducts({ first: 16, sortKey: "CREATED_AT", reverse: true });
-    return products.map(shopifyToProduct);
+    // Fetch from diverse categories for a mixed display
+    const [electronics, computing, mobile] = await Promise.all([
+      shopifyGetProducts({ first: 6, query: 'tag:"AUDIO & VIDEO." OR tag:"TELEVISIONS."', sortKey: "BEST_SELLING", reverse: true }),
+      shopifyGetProducts({ first: 5, query: 'tag:"LAPTOPS." OR tag:"GAMING."', sortKey: "CREATED_AT", reverse: true }),
+      shopifyGetProducts({ first: 5, query: 'tag:"MOBILE PHONES." OR tag:"TABLETS."', sortKey: "CREATED_AT", reverse: true }),
+    ]);
+    const all = [
+      ...electronics.products.map(shopifyToProduct),
+      ...computing.products.map(shopifyToProduct),
+      ...mobile.products.map(shopifyToProduct),
+    ];
+    // Shuffle for variety
+    return all.sort(() => Math.random() - 0.5).slice(0, 16);
   } catch {
     return [];
   }

@@ -1,54 +1,84 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProducts, searchProducts, getCollectionProducts, shopifyToProduct } from "@/lib/shopify";
+import { getProducts, shopifyToProduct } from "@/lib/shopify";
 
-// Map our internal category slugs to Shopify collection handles or query terms
-const CATEGORY_TO_SHOPIFY_QUERY: Record<string, string> = {
-    "ACCESSORIES": "accessories",
-    "APPLE": "apple",
-    "COMPUTING ACCESSORIES": "computing",
-    "CONSUMER ELECTRONICS": "electronics",
-    "ENTERPRISE": "enterprise",
-    "FACTORY RECERTIFIED": "refurbished",
-    "HP BRAND": "hp",
-    "MOBILE & TABLET": "mobile tablet",
-    "OPEN BOX": "open box",
+// ─── TAG-BASED CATEGORY MAPPING ─────────────────────────────────────────────
+// Products in the Shopify store are categorized via TAGS (e.g. "LAPTOPS.", "HP.", "GAMING.")
+// We use Shopify's tag: filter syntax for accurate results
+
+const CATEGORY_TO_TAG_QUERY: Record<string, string> = {
+    // Main nav categories
+    "ACCESSORIES": 'tag:"ACCESSORIES." OR tag:"COMPUTING ACCESSORIES." OR tag:"COMPUTER ACCESSORIES."',
+    "APPLE": 'tag:"APPLE."',
+    "COMPUTING ACCESSORIES": 'tag:"LAPTOPS." OR tag:"DESKTOPS." OR tag:"COMPUTING ACCESSORIES." OR tag:"PRINTERS."',
+    "CONSUMER ELECTRONICS": 'tag:"TELEVISIONS." OR tag:"WASHING MACHINES." OR tag:"AIR CONDITIONERS." OR tag:"FANS." OR tag:"KITCHEN." OR tag:"AUDIO & VIDEO." OR tag:"REFRIGERATORS."',
+    "ENTERPRISE": 'tag:"SMART HOMES." OR tag:"SMART HOME."',
+    "FACTORY RECERTIFIED": 'tag:"USED."',
+    "HP BRAND": 'tag:"HP."',
+    "MOBILE & TABLET": 'tag:"MOBILE PHONES." OR tag:"TABLETS." OR tag:"SMART WATCHES."',
+    "OPEN BOX": 'tag:"USED."',
     "OTHER BRAND": "",
-    "POWER": "power generator inverter",
-    "PRINT & SUPPLIES": "printer ink toner",
+    "POWER": 'tag:"GENERATORS." OR tag:"UPS." OR tag:"INVERTERS." OR tag:"POWER." OR tag:"POWER ACCESSORIES."',
+    "PRINT & SUPPLIES": 'tag:"PRINTERS." OR tag:"PRINT & SUPPLIES."',
 };
 
-// Tech setup presets - map slug to relevant search terms
-const TECH_SETUP_KEYWORDS: Record<string, string> = {
-    "creator-studio": "camera microphone ring light tripod webcam studio streaming podcast monitor",
-    "gamer-squad": "gaming console controller headset keyboard mouse monitor playstation xbox",
+// Tech setup presets - use tag-based queries
+const TECH_SETUP_TAG_QUERY: Record<string, string> = {
+    "creator-studio": 'tag:"CREATOR STUDIO." OR tag:"MICROPHONES." OR tag:"TRIPODS." OR tag:"CAMERAS."',
+    "gamer-squad": 'tag:"GAMING." OR tag:"CONSOLES." OR tag:"GAMING ACCESSORIES." OR tag:"GAMING CONTROLLERS."',
 };
 
-// Sub-category keyword mappings for search
-const SUB_CATEGORY_KEYWORDS: Record<string, string> = {
-    "Computer Accessories": "mouse keyboard usb hub webcam cable adapter",
-    "Printer Accessories": "ink toner cartridge paper drum",
-    "Mobile Accessories": "case screen protector earphone earbuds power bank",
-    "Kitchen": "blender grinder juicer kettle microwave toaster oven cooker",
-    "Home Appliances": "television tv iron washing machine air conditioner fan",
-    "Audio & Video": "headphone speaker soundbar projector earphone bluetooth",
-    "Power": "generator surge protector stabilizer ups inverter battery",
-    "Cameras": "camera digital camera dslr mirrorless action cam",
-    "Arcade": "console playstation xbox nintendo hoverboard gaming vr",
-    "Desktops": "desktop workstation tower optiplex all-in-one pc",
-    "Laptops": "laptop notebook elitebook probook thinkpad pavilion macbook chromebook",
-    "Printers": "printer laserjet inkjet deskjet officejet",
-    "Mobile Phones": "phone iphone galaxy redmi tecno infinix samsung",
-    "Tablets": "ipad tablet tab surface",
-    "Generators": "generator firman sumec elepaq",
-    "CCTV": "cctv camera dvr nvr hikvision surveillance",
-    "Access Control": "access control biometric fingerprint",
-    "Smart Home": "smart home smart plug smart bulb smart lock alexa",
-    "Door Locks": "door lock smart lock digital lock",
-    "iPhones": "iphone",
-    "iPads": "ipad",
-    "MacBooks": "macbook",
-    "Ink & Toner": "ink toner cartridge refill",
+// Sub-category tag mappings — these map the ?sub= parameter to Shopify tag queries
+const SUB_CATEGORY_TAG_QUERY: Record<string, string> = {
+    // Accessories sub-categories
+    "Computer Accessories": 'tag:"COMPUTING ACCESSORIES." OR tag:"COMPUTER ACCESSORIES."',
+    "Printer Accessories": 'tag:"PRINT & SUPPLIES."',
+    "Mobile Accessories": 'tag:"MOBILE ACCESSORIES." OR tag:"PHONE CASES." OR tag:"CHARGERS."',
+
+    // Computing & Printing sub-categories
+    "Desktops": 'tag:"DESKTOPS." OR tag:"ALL-IN-ONES."',
+    "Laptops": 'tag:"LAPTOPS."',
+    "Printers": 'tag:"PRINTERS."',
+
+    // Electronics sub-categories
+    "Kitchen": 'tag:"KITCHEN." OR tag:"KETTLES." OR tag:"MICROWAVES." OR tag:"COOKERS." OR tag:"AIR FRYERS." OR tag:"REFRIGERATORS." OR tag:"DISPENSERS."',
+    "Home Appliances": 'tag:"TELEVISIONS." OR tag:"WASHING MACHINES." OR tag:"AIR CONDITIONERS." OR tag:"FANS." OR tag:"DISPENSERS."',
+    "Audio & Video": 'tag:"AUDIO & VIDEO." OR tag:"HEADPHONES." OR tag:"SPEAKERS." OR tag:"SOUNDBAR." OR tag:"SOUNDBARS." OR tag:"STREAMING."',
+    "Power": 'tag:"GENERATORS." OR tag:"UPS." OR tag:"INVERTERS." OR tag:"POWER." OR tag:"POWER ACCESSORIES."',
+    "Cameras": 'tag:"CAMERAS." OR tag:"CAMERA ACCESSORIES."',
+    "Arcade": 'tag:"GAMING." OR tag:"CONSOLES." OR tag:"GAMING ACCESSORIES."',
+
+    // Mobile & Tablet sub-categories
+    "Mobile Phones": 'tag:"MOBILE PHONES."',
+    "Tablets": 'tag:"TABLETS."',
+
+    // Power sub-categories
+    "Power & Accessories": 'tag:"UPS." OR tag:"INVERTERS." OR tag:"POWER ACCESSORIES." OR tag:"POWER."',
+    "Power Brands": 'tag:"MERCURY." OR tag:"POWEROLOGY."',
+    "Generators": 'tag:"GENERATORS."',
+
+    // Enterprise sub-categories
+    "CCTV": 'tag:"CCTV."',
+    "Access Control": 'tag:"ACCESS CONTROL."',
+    "Smart Home": 'tag:"SMART HOMES." OR tag:"SMART HOME."',
+    "Door Locks": 'tag:"DOOR LOCKS."',
+
+    // Apple sub-categories
+    "iPhones": 'tag:"APPLE." AND tag:"MOBILE PHONES."',
+    "iPads": 'tag:"APPLE TABLETS." OR (tag:"APPLE." AND tag:"TABLETS.")',
+    "MacBooks": 'tag:"APPLE." AND tag:"LAPTOPS."',
+    "Accessories": 'tag:"APPLE." AND tag:"ACCESSORIES."',
+
+    // Print & Supplies sub-categories
+    "Ink & Toner": 'tag:"PRINT & SUPPLIES."',
 };
+
+// Brand tag mapping — brand name to Shopify tag query
+function buildBrandQuery(brand: string): string {
+    // Normalize brand name to match tag format (UPPERCASE + period)
+    const normalized = brand.toUpperCase().trim();
+    // Try exact tag match first
+    return `tag:"${normalized}." OR tag:"${normalized}"`;
+}
 
 // Map our sort fields to Shopify sort keys
 function mapSortKey(sortBy: string): string {
@@ -73,36 +103,37 @@ export async function GET(request: NextRequest) {
     const sortOrder = (searchParams.get("sortOrder") || "desc") as "asc" | "desc";
 
     try {
-        // Build the Shopify query string
+        // Build the Shopify query string using tag-based filtering
         let queryParts: string[] = [];
 
-        // Category filter
-        if (category && CATEGORY_TO_SHOPIFY_QUERY[category]) {
-            const catQuery = CATEGORY_TO_SHOPIFY_QUERY[category];
-            if (catQuery) queryParts.push(catQuery);
+        // Category filter (main nav categories)
+        if (category && CATEGORY_TO_TAG_QUERY[category]) {
+            const catQuery = CATEGORY_TO_TAG_QUERY[category];
+            if (catQuery) queryParts.push(`(${catQuery})`);
         }
 
-        // Search term
+        // Sub-category filter (takes priority over category if both present)
+        if (sub && SUB_CATEGORY_TAG_QUERY[sub]) {
+            // If sub is provided, use it instead of the broader category query
+            queryParts = [`(${SUB_CATEGORY_TAG_QUERY[sub]})`];
+        }
+
+        // Tech setup preset
+        if (techSetup && TECH_SETUP_TAG_QUERY[techSetup]) {
+            queryParts = [`(${TECH_SETUP_TAG_QUERY[techSetup]})`];
+        }
+
+        // Brand filter — use tag-based brand query
+        if (brand) {
+            queryParts.push(`(${buildBrandQuery(brand)})`);
+        }
+
+        // Search term — use plain text search (Shopify searches title, description, tags)
         if (search) {
             queryParts.push(search);
         }
 
-        // Brand filter
-        if (brand) {
-            queryParts.push(brand);
-        }
-
-        // Tech setup preset
-        if (techSetup && TECH_SETUP_KEYWORDS[techSetup]) {
-            queryParts.push(TECH_SETUP_KEYWORDS[techSetup]);
-        }
-
-        // Sub-category filter
-        if (sub && SUB_CATEGORY_KEYWORDS[sub]) {
-            queryParts.push(SUB_CATEGORY_KEYWORDS[sub]);
-        }
-
-        const shopifyQuery = queryParts.join(" ") || undefined;
+        const shopifyQuery = queryParts.length > 0 ? queryParts.join(" AND ") : undefined;
         const sortKey = mapSortKey(sortBy);
         const reverse = sortOrder === "desc";
 

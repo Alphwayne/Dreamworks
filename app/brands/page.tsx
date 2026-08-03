@@ -2,7 +2,7 @@ import { Header } from "@/components/Header";
 
 import { CartDrawer } from "@/components/CartDrawer";
 import { FloatingElements } from "@/components/FloatingElements";
-import { supabase } from "@/lib/supabase";
+import { getProducts } from "@/lib/shopify";
 import { CATEGORY_MAP } from "@/lib/types";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
@@ -60,17 +60,18 @@ const BRANDS = [
     { name: "Vertiv", slug: "vertiv", desc: "Power Solutions — UPS & Cooling", color: "#0033A0", category: "POWER" },
 ];
 
-async function getBrandProductCount(category: string) {
-    const { count } = await supabase
-        .from("products")
-        .select("*", { count: "exact", head: true })
-        .eq("category", category)
-        .eq("is_active", true);
-    return count || 0;
+async function getBrandProductCount(brandName: string) {
+    try {
+        const normalized = brandName.toUpperCase();
+        const { products } = await getProducts({ first: 1, query: `tag:"${normalized}." OR tag:"${normalized}"` });
+        return products.length > 0 ? 10 : 0; // Shopify doesn't give exact count easily, show as available
+    } catch {
+        return 0;
+    }
 }
 
 export default async function BrandsPage() {
-    const counts = await Promise.all(BRANDS.map((b) => getBrandProductCount(b.category)));
+    const counts = await Promise.all(BRANDS.map((b) => getBrandProductCount(b.name)));
 
     return (
         <>

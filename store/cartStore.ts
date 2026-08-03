@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { Product, CartItem } from "@/lib/types";
-import { createCart, addToCart, updateCartLine, removeFromCart } from "@/lib/shopify";
+import { createCart, addToCart, updateCartLine, removeFromCart, shopifyFetch } from "@/lib/shopify";
 
 interface CartStore {
     items: CartItem[];
@@ -23,6 +23,32 @@ interface CartStore {
     getTotalPrice: () => number;
     getCheckoutUrl: () => string | null;
     syncWithShopify: (product: Product, quantity: number, variantId?: string) => Promise<void>;
+}
+
+/**
+ * Look up a product's first available variant ID from Shopify by handle (slug)
+ * This ensures we can always add items to the Shopify cart even without a pre-fetched variant ID
+ */
+async function getVariantIdByHandle(handle: string): Promise<string | null> {
+    try {
+        const data = await shopifyFetch(`
+            query GetVariant($handle: String!) {
+                productByHandle(handle: $handle) {
+                    variants(first: 1) {
+                        edges {
+                            node {
+                                id
+                                availableForSale
+                            }
+                        }
+                    }
+                }
+            }
+        `, { handle });
+        return data?.productByHandle?.variants?.edges?.[0]?.node?.id || null;
+    } catch {
+        return null;
+    }
 }
 
 export const useCartStore = create<CartStore>()(
@@ -134,36 +160,47 @@ export const useCartStore = create<CartStore>()(
             },
 
             // Sync cart action with Shopify Cart API
+            // This is the KEY function that ensures items show up in Shopify checkout
             syncWithShopify: async (product: Product, quantity: number, variantId?: string) => {
                 try {
                     set({ isLoading: true });
                     const state = get();
 
-                    // We need a variant ID to add to Shopify cart
-                    // If not provided, we'll try to get it from the product's item_code
-                    // The variant ID format from Shopify is like "gid://shopify/ProductVariant/12345"
-                    const merchandiseId = variantId || null;
+                    // Get the variant ID — either passed directly or look it up by product handle/slug
+                    let merchandiseId = variantId || null;
 
                     if (!merchandiseId) {
-                        // Can't sync without variant ID — cart still works locally
+                        // Look up the variant ID from Shopify using the product slug (handle)
+                        const handle = product.slug || product.item_code;
+                        if (handle) {
+                            merchandiseId = await getVariantIdByHandle(handle);
+                        }
+                    }
+
+                    if (!merchandiseId) {
+                        // Still no variant ID — can't sync with Shopify
+                        console.warn("[CartStore] Could not find variant ID for:", product.product_name);
                         set({ isLoading: false });
                         return;
                     }
 
                     if (!state.shopifyCartId) {
-                        // Create a new Shopify cart
+                        // Create a new Shopify cart and add the item
                         const cart = await createCart();
                         if (cart) {
-                            // Add the item to the new cart
                             const updatedCart = await addToCart(cart.id, merchandiseId, quantity);
                             if (updatedCart) {
-                                const newLineId = updatedCart.lines.edges[0]?.node.id;
+                                // Find the line item we just added
+                                const newLine = updatedCart.lines.edges.find(
+                                    (e: any) => e.node.merchandise.id === merchandiseId
+                                ) || updatedCart.lines.edges[updatedCart.lines.edges.length - 1];
+                                const newLineId = newLine?.node?.id;
                                 set({
                                     shopifyCartId: updatedCart.id,
                                     checkoutUrl: updatedCart.checkoutUrl,
                                     shopifyLineIds: newLineId
-                                        ? { ...state.shopifyLineIds, [product.id]: newLineId }
-                                        : state.shopifyLineIds,
+                                        ? { ...get().shopifyLineIds, [product.id]: newLineId }
+                                        : get().shopifyLineIds,
                                 });
                             } else {
                                 set({
@@ -176,12 +213,15 @@ export const useCartStore = create<CartStore>()(
                         // Add to existing Shopify cart
                         const cart = await addToCart(state.shopifyCartId, merchandiseId, quantity);
                         if (cart) {
-                            // Find the new line item
-                            const lastLine = cart.lines.edges[cart.lines.edges.length - 1]?.node;
+                            // Find the line item we just added (match by merchandise ID)
+                            const addedLine = cart.lines.edges.find(
+                                (e: any) => e.node.merchandise.id === merchandiseId
+                            ) || cart.lines.edges[cart.lines.edges.length - 1];
+                            const lineId = addedLine?.node?.id;
                             set({
                                 checkoutUrl: cart.checkoutUrl,
-                                shopifyLineIds: lastLine
-                                    ? { ...get().shopifyLineIds, [product.id]: lastLine.id }
+                                shopifyLineIds: lineId
+                                    ? { ...get().shopifyLineIds, [product.id]: lineId }
                                     : get().shopifyLineIds,
                             });
                         }

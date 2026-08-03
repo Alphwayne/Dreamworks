@@ -102,7 +102,9 @@ export const SLUG_TO_CATEGORY: Record<string, string> = {
     ),
     // Aliases for Header navigation compatibility
     "computing-accessories": "COMPUTING ACCESSORIES",
+    "computing-printing": "COMPUTING ACCESSORIES",
     "consumer-electronics": "CONSUMER ELECTRONICS",
+    "electronics": "CONSUMER ELECTRONICS",
     "smart-devices": "ENTERPRISE",
     "surveillance": "ENTERPRISE",
     "office-essentials": "ACCESSORIES",

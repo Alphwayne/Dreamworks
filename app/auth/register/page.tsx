@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, UserPlus, Star, Gift } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { shopifyFetch } from "@/lib/shopify";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -25,13 +25,53 @@ export default function RegisterPage() {
         if (form.password !== form.confirmPassword) { setError("Passwords do not match"); return; }
         if (form.password.length < 6) { setError("Password must be at least 6 characters"); return; }
         setLoading(true);
-        const { error } = await supabase.auth.signUp({
-            email: form.email,
-            password: form.password,
-            options: { data: { first_name: form.firstName, last_name: form.lastName, phone: form.phone } },
-        });
-        if (error) { setError(error.message); setLoading(false); return; }
-        setSuccess(true);
+
+        try {
+            // Use Shopify Storefront API to create a customer account
+            const data = await shopifyFetch(`
+                mutation customerCreate($input: CustomerCreateInput!) {
+                    customerCreate(input: $input) {
+                        customerUserErrors {
+                            code
+                            field
+                            message
+                        }
+                        customer {
+                            id
+                            email
+                            firstName
+                            lastName
+                        }
+                    }
+                }
+            `, {
+                input: {
+                    email: form.email,
+                    password: form.password,
+                    firstName: form.firstName,
+                    lastName: form.lastName,
+                    phone: form.phone ? `+234${form.phone.replace(/^0+/, "")}` : undefined,
+                    acceptsMarketing: true,
+                },
+            });
+
+            const result = data.customerCreate;
+
+            if (result.customerUserErrors && result.customerUserErrors.length > 0) {
+                const errMsg = result.customerUserErrors[0].message;
+                setError(errMsg || "Registration failed. Please try again.");
+                setLoading(false);
+                return;
+            }
+
+            if (result.customer) {
+                setSuccess(true);
+            } else {
+                setError("Registration failed. Please try again.");
+            }
+        } catch (err: any) {
+            setError("Registration failed. Please try again.");
+        }
         setLoading(false);
     };
 
@@ -43,9 +83,9 @@ export default function RegisterPage() {
                         <Star size={36} className="text-white fill-white" />
                     </div>
                     <h2 className="text-2xl font-bold text-white mb-2">Welcome to DreamWorks!</h2>
-                    <p className="text-white/50 text-sm mb-3">Check your email to confirm your account.</p>
+                    <p className="text-white/50 text-sm mb-3">Your account has been created successfully. You can now sign in.</p>
                     <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 mb-6">
-                        <p className="text-yellow-300 text-sm font-semibold">🎉 You've earned 50,000 DreamPoints for signing up!</p>
+                        <p className="text-yellow-300 text-sm font-semibold">🎉 You&apos;ve earned 50,000 DreamPoints for signing up!</p>
                     </div>
                     <Link href="/auth/signin" className="block w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-4 rounded-xl font-bold hover:from-blue-500 hover:to-blue-400 transition-all">
                         Sign In Now
@@ -112,7 +152,7 @@ export default function RegisterPage() {
                                     </div>
                                 ))}
                             </div>
-                            {[{ name: "email", type: "email", label: "Email Address", placeholder: "you@example.com" }, { name: "phone", type: "tel", label: "Phone Number", placeholder: "+234..." }].map((field) => (
+                            {[{ name: "email", type: "email", label: "Email Address", placeholder: "you@example.com" }, { name: "phone", type: "tel", label: "Phone Number", placeholder: "08012345678" }].map((field) => (
                                 <div key={field.name}>
                                     <label className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-2 block">{field.label}</label>
                                     <input type={field.type} name={field.name} value={form[field.name as keyof typeof form]} onChange={handleChange} required={field.name === "email"} placeholder={field.placeholder}

@@ -8,7 +8,7 @@ import { Header } from "@/components/Header";
 
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice, getProductImage } from "@/lib/types";
-import { supabase } from "@/lib/supabase";
+// Auth now uses Shopify customer tokens stored in localStorage
 
 const STEPS = ["Contact & Delivery", "Payment", "Confirm"];
 
@@ -33,12 +33,11 @@ export default function CheckoutPage() {
     });
 
     useEffect(() => {
-        supabase.auth.getUser().then(({ data }) => {
-            if (data.user) {
-                setUserId(data.user.id);
-                setForm((f) => ({ ...f, email: data.user.email || "" }));
-            }
-        });
+        // Check for Shopify customer token
+        const token = localStorage.getItem("shopify_customer_token");
+        if (token) {
+            setUserId(token);
+        }
     }, []);
 
     const deliveryFee = DELIVERY_ZONES[zone].fee;

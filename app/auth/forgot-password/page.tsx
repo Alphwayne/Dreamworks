@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { shopifyFetch } from "@/lib/shopify";
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState("");
@@ -15,17 +15,32 @@ export default function ForgotPasswordPage() {
         setLoading(true);
         setError("");
 
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/auth/reset-password`,
-        });
+        try {
+            // Use Shopify Storefront API customerRecover mutation
+            const data = await shopifyFetch(`
+                mutation customerRecover($email: String!) {
+                    customerRecover(email: $email) {
+                        customerUserErrors {
+                            code
+                            field
+                            message
+                        }
+                    }
+                }
+            `, { email });
 
-        if (error) {
-            setError(error.message);
-            setLoading(false);
-            return;
+            const result = data.customerRecover;
+
+            if (result.customerUserErrors && result.customerUserErrors.length > 0) {
+                setError(result.customerUserErrors[0].message || "Failed to send reset email");
+                setLoading(false);
+                return;
+            }
+
+            setSent(true);
+        } catch (err) {
+            setError("Failed to send reset email. Please try again.");
         }
-
-        setSent(true);
         setLoading(false);
     };
 
@@ -51,7 +66,7 @@ export default function ForgotPasswordPage() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 w-full max-w-md">
                 <div className="text-center mb-8">
                     <Link href="/"><h1 className="text-2xl font-bold text-blue-700">DREAMWORKS</h1></Link>
-                    <p className="text-gray-500 text-sm mt-2">Enter your email and we'll send you a reset link</p>
+                    <p className="text-gray-500 text-sm mt-2">Enter your email and we&apos;ll send you a reset link</p>
                 </div>
 
                 {error && (

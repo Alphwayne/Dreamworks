@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, LogIn, Star } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { shopifyFetch } from "@/lib/shopify";
 
 export default function SignInPage() {
     const router = useRouter();
@@ -23,12 +23,51 @@ export default function SignInPage() {
         e.preventDefault();
         setLoading(true);
         setError("");
-        const { error } = await supabase.auth.signInWithPassword({
-            email: form.email,
-            password: form.password,
-        });
-        if (error) { setError(error.message); setLoading(false); return; }
-        router.push("/account");
+
+        try {
+            // Use Shopify Storefront API to create a customer access token
+            const data = await shopifyFetch(`
+                mutation customerAccessTokenCreate($input: CustomerAccessTokenCreateInput!) {
+                    customerAccessTokenCreate(input: $input) {
+                        customerUserErrors {
+                            code
+                            field
+                            message
+                        }
+                        customerAccessToken {
+                            accessToken
+                            expiresAt
+                        }
+                    }
+                }
+            `, {
+                input: {
+                    email: form.email,
+                    password: form.password,
+                },
+            });
+
+            const result = data.customerAccessTokenCreate;
+
+            if (result.customerUserErrors && result.customerUserErrors.length > 0) {
+                const errMsg = result.customerUserErrors[0].message;
+                setError(errMsg || "Invalid email or password");
+                setLoading(false);
+                return;
+            }
+
+            if (result.customerAccessToken) {
+                // Store the access token
+                localStorage.setItem("shopify_customer_token", result.customerAccessToken.accessToken);
+                localStorage.setItem("shopify_customer_token_expires", result.customerAccessToken.expiresAt);
+                router.push("/account");
+            } else {
+                setError("Login failed. Please try again.");
+            }
+        } catch (err: any) {
+            setError("Login failed. Please check your credentials.");
+        }
+        setLoading(false);
     };
 
     return (
@@ -58,7 +97,7 @@ export default function SignInPage() {
                         </span>
                     </h2>
                     <p className="text-white/50 text-base leading-relaxed mb-8">
-                        Nigeria's #1 tech marketplace. Sign in to access your account, track orders, and manage your DreamPoints.
+                        Nigeria&apos;s #1 tech marketplace. Sign in to access your account, track orders, and manage your DreamPoints.
                     </p>
 
                     {/* Stats */}
@@ -148,7 +187,7 @@ export default function SignInPage() {
 
                         <div className="mt-6 text-center">
                             <p className="text-sm text-white/30">
-                                Don't have an account?{" "}
+                                Don&apos;t have an account?{" "}
                                 <Link href="/auth/register" className="text-blue-400 font-semibold hover:text-blue-300 transition-colors">
                                     Create account
                                 </Link>

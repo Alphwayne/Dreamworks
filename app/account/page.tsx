@@ -4,57 +4,86 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Package, LogOut, User, ChevronRight, Star, Gift, ShoppingBag } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { shopifyFetch } from "@/lib/shopify";
 import { Header } from "@/components/Header";
-
 import { CartDrawer } from "@/components/CartDrawer";
 import { formatPrice } from "@/lib/types";
 
-interface UserOrder {
-    id: number;
-    order_number: string;
-    total: number;
-    financial_status: string;
-    fulfillment_status: string;
-    created_at: string;
+interface ShopifyOrder {
+    orderNumber: number;
+    totalPrice: { amount: string; currencyCode: string };
+    financialStatus: string;
+    fulfillmentStatus: string;
+    processedAt: string;
 }
 
 export default function AccountPage() {
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
-    const [orders, setOrders] = useState<UserOrder[]>([]);
-    const [balance, setBalance] = useState(0);
+    const [customer, setCustomer] = useState<any>(null);
+    const [orders, setOrders] = useState<ShopifyOrder[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function load() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) { router.push("/auth/signin"); return; }
-            setUser(user);
+            const token = localStorage.getItem("shopify_customer_token");
+            if (!token) {
+                router.push("/auth/signin");
+                return;
+            }
 
-            const [ordersRes, pointsRes] = await Promise.all([
-                supabase.from("orders").select("id,order_number,total,financial_status,fulfillment_status,created_at")
-                    .eq("email", user.email).order("created_at", { ascending: false }).limit(10),
-                fetch(`/api/dreampoints/balance?user_id=${user.id}`).then(r => r.json()),
-            ]);
+            try {
+                // Fetch customer data from Shopify using the access token
+                const data = await shopifyFetch(`
+                    query GetCustomer($customerAccessToken: String!) {
+                        customer(customerAccessToken: $customerAccessToken) {
+                            id
+                            firstName
+                            lastName
+                            email
+                            phone
+                            orders(first: 10, sortKey: PROCESSED_AT, reverse: true) {
+                                edges {
+                                    node {
+                                        orderNumber
+                                        totalPrice {
+                                            amount
+                                            currencyCode
+                                        }
+                                        financialStatus
+                                        fulfillmentStatus
+                                        processedAt
+                                    }
+                                }
+                            }
+                        }
+                    }
+                `, { customerAccessToken: token });
 
-            setOrders((ordersRes.data || []) as UserOrder[]);
-            setBalance(pointsRes.balance || 0);
+                if (!data.customer) {
+                    // Token expired or invalid
+                    localStorage.removeItem("shopify_customer_token");
+                    localStorage.removeItem("shopify_customer_token_expires");
+                    router.push("/auth/signin");
+                    return;
+                }
 
-            // Award signup points if not yet awarded
-            await fetch("/api/dreampoints/award", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ user_id: user.id, action: "signup" }),
-            });
+                setCustomer(data.customer);
+                setOrders(data.customer.orders.edges.map((e: any) => e.node));
+            } catch (err) {
+                console.error("[Account] Failed to load customer:", err);
+                localStorage.removeItem("shopify_customer_token");
+                router.push("/auth/signin");
+                return;
+            }
 
             setLoading(false);
         }
         load();
     }, [router]);
 
-    const handleSignOut = async () => {
-        await supabase.auth.signOut();
+    const handleSignOut = () => {
+        localStorage.removeItem("shopify_customer_token");
+        localStorage.removeItem("shopify_customer_token_expires");
         router.push("/");
     };
 
@@ -70,8 +99,7 @@ export default function AccountPage() {
         );
     }
 
-    const firstName = user?.user_metadata?.first_name || user?.email?.split("@")[0] || "Customer";
-    const nairaValue = Math.floor(balance / 100000) * 1000;
+    const firstName = customer?.firstName || customer?.email?.split("@")[0] || "Customer";
 
     return (
         <>
@@ -92,7 +120,7 @@ export default function AccountPage() {
                                     <div>
                                         <p className="text-blue-200 text-xs mb-0.5">Welcome back</p>
                                         <h1 className="text-xl font-bold text-white">{firstName}</h1>
-                                        <p className="text-blue-200 text-xs">{user?.email}</p>
+                                        <p className="text-blue-200 text-xs">{customer?.email}</p>
                                     </div>
                                 </div>
                                 <button
@@ -110,8 +138,8 @@ export default function AccountPage() {
                                         <Star size={18} className="text-white fill-white" />
                                     </div>
                                     <div>
-                                        <p className="text-white font-bold text-lg">{balance.toLocaleString()} pts</p>
-                                        <p className="text-blue-200 text-xs">≈ ₦{nairaValue.toLocaleString()} in rewards</p>
+                                        <p className="text-white font-bold text-lg">DreamPoints Member</p>
+                                        <p className="text-blue-200 text-xs">Earn points on every purchase</p>
                                     </div>
                                 </div>
                                 <Link href="/dreampoints" className="text-xs text-blue-200 hover:text-white flex items-center gap-1 transition-colors">
@@ -169,28 +197,28 @@ export default function AccountPage() {
                         ) : (
                             <div className="space-y-3">
                                 {orders.map((order) => (
-                                    <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-blue-50/50 transition-colors">
+                                    <div key={order.orderNumber} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-blue-50/50 transition-colors">
                                         <div>
-                                            <p className="font-bold text-gray-900 text-sm">#{order.order_number}</p>
+                                            <p className="font-bold text-gray-900 text-sm">#{order.orderNumber}</p>
                                             <p className="text-xs text-gray-500 mt-0.5">
-                                                {new Date(order.created_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
+                                                {new Date(order.processedAt).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
                                             </p>
                                             <div className="flex gap-2 mt-1.5">
-                                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${order.financial_status === "paid" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${order.financialStatus === "PAID" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
                                                     }`}>
-                                                    {order.financial_status}
+                                                    {order.financialStatus?.toLowerCase() || "pending"}
                                                 </span>
-                                                {order.fulfillment_status && (
+                                                {order.fulfillmentStatus && (
                                                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                                                        {order.fulfillment_status}
+                                                        {order.fulfillmentStatus?.toLowerCase()}
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-bold text-blue-700">{formatPrice(Number(order.total))}</p>
+                                            <p className="font-bold text-blue-700">{formatPrice(parseFloat(order.totalPrice.amount))}</p>
                                             <a
-                                                href={`https://wa.me/2349027256852?text=Hi! I'd like to track order #${order.order_number}`}
+                                                href={`https://wa.me/2349027256852?text=Hi! I'd like to track order #${order.orderNumber}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-xs text-blue-600 hover:underline mt-1 flex items-center gap-1 justify-end"

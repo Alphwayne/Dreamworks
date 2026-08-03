@@ -1,15 +1,21 @@
-import { supabase } from "@/lib/supabase";
+import { getProducts, shopifyToProduct } from "@/lib/shopify";
 import { Product } from "@/lib/types";
 
-// Get products by brand name (search in product_name)
+// Get products by brand name using Shopify tag-based filtering
 export async function getProductsByBrand(brandName: string, limit = 24, offset = 0) {
-    const { data, error, count } = await supabase
-        .from("products")
-        .select("*", { count: "exact" })
-        .eq("is_active", true)
-        .ilike("product_name", `%${brandName}%`)
-        .range(offset, offset + limit - 1);
+    const normalized = brandName.toUpperCase().trim();
+    // Search by tag (brand tags like "HP.", "APPLE.", "DELL.") and also by title
+    const query = `tag:"${normalized}." OR tag:"${normalized}" OR title:${brandName}`;
 
-    if (error) throw error;
-    return { products: data as Product[], count: count || 0 };
+    const { products: shopifyProducts } = await getProducts({
+        first: Math.min(offset + limit, 250),
+        query,
+        sortKey: "CREATED_AT",
+        reverse: true,
+    });
+
+    const allProducts = shopifyProducts.map(shopifyToProduct);
+    const paginatedProducts = allProducts.slice(offset, offset + limit);
+
+    return { products: paginatedProducts, count: allProducts.length };
 }

@@ -513,7 +513,7 @@ export function shopifyToProduct(shopifyProduct: ShopifyProduct): Product {
         id: parseInt(shopifyProduct.id.replace(/\D/g, "").slice(-8)) || Math.random() * 100000,
         item_code: firstVariant?.sku || shopifyProduct.handle,
         product_name: shopifyProduct.title,
-        category: mapShopifyTypeToCategory(shopifyProduct.productType, shopifyProduct.vendor),
+        category: mapTagsToCategory(shopifyProduct.tags, shopifyProduct.productType),
         selling_price: price,
         compare_price: comparePrice && comparePrice > price ? comparePrice : null,
         slug: shopifyProduct.handle,
@@ -525,32 +525,43 @@ export function shopifyToProduct(shopifyProduct: ShopifyProduct): Product {
 }
 
 /**
- * Maps Shopify product type / vendor to our internal category system
+ * Maps Shopify product tags to our internal category system
+ * Tags are the primary categorization method in this store
  */
-function mapShopifyTypeToCategory(productType: string, vendor: string): string {
-    const type = productType.toLowerCase();
-    const v = vendor.toLowerCase();
+function mapTagsToCategory(tags: string[], productType: string): string {
+    const tagSet = new Set(tags.map(t => t.toUpperCase()));
 
-    // Brand-based mapping
-    if (v === "apple" || v.includes("apple")) return "APPLE";
-    if (v === "hp" || v.includes("hewlett")) return "HP BRAND";
-
-    // Type-based mapping
-    if (type.includes("laptop") || type.includes("computer") || type.includes("desktop") || type.includes("printer"))
+    // Check tags in priority order
+    if (tagSet.has("APPLE.") || tagSet.has("APPLE")) return "APPLE";
+    if (tagSet.has("HP.") || tagSet.has("HP")) return "HP BRAND";
+    if (tagSet.has("LAPTOPS.") || tagSet.has("DESKTOPS.") || tagSet.has("COMPUTING ACCESSORIES."))
         return "COMPUTING ACCESSORIES";
-    if (type.includes("phone") || type.includes("mobile") || type.includes("tablet"))
+    if (tagSet.has("MOBILE PHONES.") || tagSet.has("TABLETS."))
         return "MOBILE & TABLET";
-    if (type.includes("tv") || type.includes("television") || type.includes("audio") || type.includes("electronic"))
-        return "CONSUMER ELECTRONICS";
-    if (type.includes("security") || type.includes("cctv") || type.includes("enterprise"))
-        return "ENTERPRISE";
-    if (type.includes("power") || type.includes("generator") || type.includes("ups"))
-        return "POWER";
-    if (type.includes("accessory") || type.includes("accessories"))
-        return "ACCESSORIES";
-    if (type.includes("print") || type.includes("ink") || type.includes("toner"))
+    if (tagSet.has("PRINTERS.") || tagSet.has("PRINT & SUPPLIES."))
         return "PRINT & SUPPLIES";
+    if (tagSet.has("GENERATORS.") || tagSet.has("UPS.") || tagSet.has("INVERTERS.") || tagSet.has("POWER.") || tagSet.has("POWER ACCESSORIES."))
+        return "POWER";
+    if (tagSet.has("SMART HOMES.") || tagSet.has("SMART HOME."))
+        return "ENTERPRISE";
+    if (tagSet.has("TELEVISIONS.") || tagSet.has("WASHING MACHINES.") || tagSet.has("AIR CONDITIONERS.") ||
+        tagSet.has("FANS.") || tagSet.has("KITCHEN.") || tagSet.has("AUDIO & VIDEO.") ||
+        tagSet.has("HEADPHONES.") || tagSet.has("SPEAKERS.") || tagSet.has("REFRIGERATORS.") ||
+        tagSet.has("MICROWAVES.") || tagSet.has("COOKERS.") || tagSet.has("AIR FRYERS.") ||
+        tagSet.has("DISPENSERS.") || tagSet.has("SOUNDBAR.") || tagSet.has("SOUNDBARS."))
+        return "CONSUMER ELECTRONICS";
+    if (tagSet.has("GAMING.") || tagSet.has("CONSOLES.") || tagSet.has("GAMING ACCESSORIES."))
+        return "CONSUMER ELECTRONICS";
+    if (tagSet.has("ACCESSORIES.") || tagSet.has("COMPUTER ACCESSORIES."))
+        return "ACCESSORIES";
+    if (tagSet.has("USED."))
+        return "FACTORY RECERTIFIED";
 
-    // Default
+    // Fallback to productType if tags don't match
+    const type = productType.toLowerCase();
+    if (type.includes("laptop") || type.includes("computer")) return "COMPUTING ACCESSORIES";
+    if (type.includes("phone") || type.includes("tablet")) return "MOBILE & TABLET";
+    if (type.includes("headphone") || type.includes("speaker")) return "CONSUMER ELECTRONICS";
+
     return "OTHER BRAND";
 }
