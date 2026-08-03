@@ -1,14 +1,24 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice, getProductImage } from "@/lib/types";
 
 export function CartDrawer() {
-    const { items, isOpen, closeCart, removeItem, updateQuantity, getTotalPrice } = useCartStore();
+    const { items, isOpen, closeCart, removeItem, updateQuantity, getTotalPrice, checkoutUrl, isLoading } = useCartStore();
     const total = getTotalPrice();
+
+    const handleCheckout = () => {
+        if (checkoutUrl) {
+            // Redirect to Shopify hosted checkout
+            window.location.href = checkoutUrl;
+        } else {
+            // Fallback to custom checkout if no Shopify cart exists
+            window.location.href = "/checkout";
+        }
+        closeCart();
+    };
 
     return (
         <>
@@ -122,14 +132,14 @@ export function CartDrawer() {
                             💳 Pay Small Small — flexible instalments available
                         </div>
 
-                        {/* Checkout button */}
-                        <Link
-                            href="/checkout"
-                            onClick={closeCart}
-                            className="block w-full bg-blue-700 hover:bg-blue-800 text-white text-center font-bold py-3 rounded-xl transition-colors"
+                        {/* Checkout button — redirects to Shopify hosted checkout */}
+                        <button
+                            onClick={handleCheckout}
+                            disabled={isLoading}
+                            className="block w-full bg-blue-700 hover:bg-blue-800 text-white text-center font-bold py-3 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-wait"
                         >
-                            Checkout Securely →
-                        </Link>
+                            {isLoading ? "Preparing..." : "Checkout Securely →"}
+                        </button>
 
                         <button
                             onClick={closeCart}

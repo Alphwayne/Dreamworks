@@ -3,9 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 
 // Create a robust server-side client - tries service role key first, falls back to anon
 function getSupabaseAdmin() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiJ9.placeholder";
     const key = serviceKey || anonKey;
 
     return createClient(url, key, {

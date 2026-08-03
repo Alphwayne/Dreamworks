@@ -19,7 +19,7 @@ import {
   ChevronRight, ArrowRight, BookOpen, Heart, Clock,
 } from "lucide-react";
 import { CATEGORY_MAP } from "@/lib/types";
-import { supabase } from "@/lib/supabase";
+import { getProducts as shopifyGetProducts, shopifyToProduct } from "@/lib/shopify";
 import Image from "next/image";
 
 // ISR: Revalidate every 10 minutes for fast loads with fresh data
@@ -84,160 +84,106 @@ const SELLING_POINTS = [
   { icon: "🔒", label: "Authentic. Guaranteed.", sub: "Every product verified", color: "from-indigo-600 to-blue-800" },
 ];
 
-// Fetch products with compare_price (deals)
+// Fetch products with compare_price (deals) — from Shopify
 async function getFlashDeals() {
-  const { data } = await supabase
-    .from("products")
-    .select("id, product_name, selling_price, compare_price, image_url, slug, category")
-    .eq("is_active", true)
-    .not("compare_price", "is", null)
-    .gt("compare_price", 0)
-    .order("created_at", { ascending: false })
-    .limit(10);
-  return data || [];
+  try {
+    const { products } = await shopifyGetProducts({ first: 20, sortKey: "CREATED_AT", reverse: true });
+    // Filter to products that have a compare-at price (on sale)
+    return products
+      .map(shopifyToProduct)
+      .filter(p => p.compare_price && p.compare_price > p.selling_price)
+      .slice(0, 10);
+  } catch {
+    return [];
+  }
 }
 
-// Fetch the single best deal for Deal of the Day
+// Fetch the single best deal for Deal of the Day — from Shopify
 async function getDealOfTheDay() {
-  const { data } = await supabase
-    .from("products")
-    .select("id, product_name, selling_price, compare_price, image_url, slug, category, description")
-    .eq("is_active", true)
-    .not("compare_price", "is", null)
-    .gt("compare_price", 0)
-    .order("compare_price", { ascending: false })
-    .limit(1)
-    .single();
-  return data;
+  try {
+    const { products } = await shopifyGetProducts({ first: 30, sortKey: "PRICE", reverse: true });
+    const deals = products
+      .map(shopifyToProduct)
+      .filter(p => p.compare_price && p.compare_price > p.selling_price);
+    return deals[0] || null;
+  } catch {
+    return null;
+  }
 }
 
-// Fetch trending (most expensive = most popular proxy)
+// Fetch trending (best selling) — from Shopify
 async function getTrendingProducts() {
-  const { data } = await supabase
-    .from("products")
-    .select("id, product_name, selling_price, compare_price, image_url, slug, category")
-    .eq("is_active", true)
-    .order("selling_price", { ascending: false })
-    .limit(8);
-  return data || [];
+  try {
+    const { products } = await shopifyGetProducts({ first: 8, sortKey: "BEST_SELLING", reverse: true });
+    return products.map(shopifyToProduct);
+  } catch {
+    return [];
+  }
 }
 
-// Fetch just launched (newest)
+// Fetch just launched (newest) — from Shopify
 async function getJustLaunched() {
-  const { data } = await supabase
-    .from("products")
-    .select("id, product_name, selling_price, compare_price, image_url, slug, category, created_at")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false })
-    .limit(5);
-  return data || [];
+  try {
+    const { products } = await shopifyGetProducts({ first: 5, sortKey: "CREATED_AT", reverse: true });
+    return products.map(shopifyToProduct);
+  } catch {
+    return [];
+  }
 }
 
-// Fetch bundle suggestions — single query, then split by category
+// Fetch bundle suggestions — from Shopify
 async function getBundles() {
   const bundleConfigs = [
-    { title: "Home Office", icon: "💻", description: "Everything you need for a productive workspace", categories: ["COMPUTING ACCESSORIES", "POWER", "ACCESSORIES"] },
-    { title: "Smart Home", icon: "🏠", description: "Transform your home into a connected space", categories: ["ENTERPRISE", "ACCESSORIES", "POWER"] },
-    { title: "Mobile Life", icon: "📱", description: "Stay connected and powered up on the go", categories: ["MOBILE & TABLET", "ACCESSORIES", "POWER"] },
+    { title: "Home Office", icon: "💻", description: "Everything you need for a productive workspace", queries: ["laptop", "monitor", "keyboard mouse"] },
+    { title: "Smart Home", icon: "🏠", description: "Transform your home into a connected space", queries: ["smart home", "security camera", "speaker"] },
+    { title: "Mobile Life", icon: "📱", description: "Stay connected and powered up on the go", queries: ["phone", "power bank", "earbuds"] },
   ];
 
-  // Fetch all needed categories in one query
-  const allCategories = [...new Set(bundleConfigs.flatMap(c => c.categories))];
-  const { data: allProducts } = await supabase
-    .from("products")
-    .select("id, product_name, selling_price, image_url, slug, category")
-    .in("category", allCategories)
-    .eq("is_active", true)
-    .limit(50);
-
-  const productsByCategory = new Map<string, any[]>();
-  (allProducts || []).forEach(p => {
-    const list = productsByCategory.get(p.category) || [];
-    list.push(p);
-    productsByCategory.set(p.category, list);
-  });
-
-  const bundles = bundleConfigs.map((config) => {
-    const products: any[] = [];
-    for (const cat of config.categories) {
-      const catProducts = productsByCategory.get(cat) || [];
-      products.push(...catProducts.slice(0, 3));
-    }
-    return {
-      title: config.title,
-      description: config.description,
-      icon: config.icon,
-      gradient: "",
-      products: products.slice(0, 8),
-    };
-  });
-
-  return bundles.filter((b) => b.products.length >= 3);
+  try {
+    const bundles = await Promise.all(bundleConfigs.map(async (config) => {
+      const products: any[] = [];
+      for (const q of config.queries) {
+        try {
+          const { products: found } = await shopifyGetProducts({ first: 3, query: q });
+          products.push(...found.map(shopifyToProduct));
+        } catch { /* skip */ }
+      }
+      return {
+        title: config.title,
+        description: config.description,
+        icon: config.icon,
+        gradient: "",
+        products: products.slice(0, 8),
+      };
+    }));
+    return bundles.filter((b) => b.products.length >= 3);
+  } catch {
+    return [];
+  }
 }
 
-// Fetch catchy featured products from different categories for the visual strip
+// Fetch catchy featured products from Shopify for the visual strip
 async function getCatchyProducts() {
-  const categories = [
-    "COMPUTING ACCESSORIES", "MOBILE & TABLET", "CONSUMER ELECTRONICS",
-    "ENTERPRISE", "ACCESSORIES", "POWER", "APPLE",
-  ];
-  const results = await Promise.all(
-    categories.map((cat) =>
-      supabase
-        .from("products")
-        .select("id, product_name, selling_price, image_url, slug, category")
-        .eq("category", cat)
-        .eq("is_active", true)
-        .not("image_url", "is", null)
-        .order("selling_price", { ascending: false })
-        .limit(2)
-        .then(({ data }) => data || [])
-    )
-  );
-  // Interleave products from different categories
-  const mixed: any[] = [];
-  const maxLen = Math.max(...results.map((r) => r.length));
-  for (let i = 0; i < maxLen; i++) {
-    for (const arr of results) {
-      if (arr[i]) mixed.push(arr[i]);
-    }
+  try {
+    const { products } = await shopifyGetProducts({ first: 14, sortKey: "BEST_SELLING", reverse: true });
+    return products.map(shopifyToProduct).map((p) => ({
+      label: p.product_name.length > 30 ? p.product_name.slice(0, 30) + "..." : p.product_name,
+      slug: p.slug || String(p.id),
+      image: p.image_url || "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&q=75",
+      isProduct: true,
+    }));
+  } catch {
+    return [];
   }
-  return mixed.slice(0, 14).map((p) => ({
-    label: p.product_name.length > 30 ? p.product_name.slice(0, 30) + "..." : p.product_name,
-    slug: p.slug || p.id,
-    image: p.image_url || "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&q=75",
-    isProduct: true,
-  }));
 }
 
 async function getMixedProducts() {
-  const categories = [
-    "COMPUTING ACCESSORIES",
-    "MOBILE & TABLET",
-    "ENTERPRISE",
-    "ACCESSORIES",
-    "POWER",
-    "CONSUMER ELECTRONICS",
-  ];
-  const results = await Promise.all(
-    categories.map((cat) =>
-      supabase
-        .from("products")
-        .select("*")
-        .eq("category", cat)
-        .eq("is_active", true)
-        .limit(3)
-        .then(({ data }) => data || [])
-    )
-  );
-  const mixed: any[] = [];
-  const maxLen = Math.max(...results.map((r) => r.length));
-  for (let i = 0; i < maxLen; i++) {
-    for (const arr of results) {
-      if (arr[i]) mixed.push(arr[i]);
-    }
+  try {
+    const { products } = await shopifyGetProducts({ first: 16, sortKey: "CREATED_AT", reverse: true });
+    return products.map(shopifyToProduct);
+  } catch {
+    return [];
   }
-  return mixed.slice(0, 16);
 }
 
 

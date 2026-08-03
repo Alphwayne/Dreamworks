@@ -23,7 +23,7 @@ export default function ProductDetailPage() {
     const slug = params.slug as string;
 
     const [product, setProduct] = useState<Product | null>(null);
-    const [inventory, setInventory] = useState<Inventory | null>(null);
+    const [inventory, setInventory] = useState<any>(null);
     const [related, setRelated] = useState<Product[]>([]);
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(true);
@@ -64,7 +64,9 @@ export default function ProductDetailPage() {
 
     const handleAddToCart = () => {
         if (!product) return;
-        addItem(product, quantity);
+        // Pass Shopify variant ID for cart sync (from inventory data)
+        const variantId = inventory?.variant_id || null;
+        addItem(product, quantity, variantId);
         setAdded(true);
         setTimeout(() => setAdded(false), 2000);
     };
@@ -103,7 +105,7 @@ export default function ProductDetailPage() {
     const discount = formatDiscount(product.selling_price, product.compare_price);
     const image = getProductImage(product);
     const categoryInfo = CATEGORY_MAP[product.category];
-    const isInStock = !inventory || (inventory.available ?? 0) > 0;
+    const isInStock = !inventory || inventory.in_stock !== false;
 
     return (
         <>
@@ -255,8 +257,8 @@ export default function ProductDetailPage() {
                                     ["Product Name", product.product_name],
                                     ["Category", categoryInfo?.label || product.category],
                                     ["Price", formatPrice(product.selling_price)],
-                                    ["Availability", isInStock ? `In Stock (${inventory?.available ?? "Available"} units)` : "Out of Stock"],
-                                    ["Location", inventory?.location || "Ikeja, Lagos"],
+                                    ["Availability", isInStock ? `In Stock${inventory?.quantity_available ? ` (${inventory.quantity_available} units)` : ""}` : "Out of Stock"],
+                                    ["Location", "Ikeja, Lagos"],
                                 ].map(([key, value], i) => (
                                     <tr key={key} className={i % 2 === 0 ? "bg-gray-50" : "bg-white"}>
                                         <td className="py-3 px-4 font-semibold text-gray-500 w-1/3">{key}</td>

@@ -1,47 +1,64 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getProducts, searchProducts, getCollectionProducts, shopifyToProduct } from "@/lib/shopify";
+
+// Map our internal category slugs to Shopify collection handles or query terms
+const CATEGORY_TO_SHOPIFY_QUERY: Record<string, string> = {
+    "ACCESSORIES": "accessories",
+    "APPLE": "apple",
+    "COMPUTING ACCESSORIES": "computing",
+    "CONSUMER ELECTRONICS": "electronics",
+    "ENTERPRISE": "enterprise",
+    "FACTORY RECERTIFIED": "refurbished",
+    "HP BRAND": "hp",
+    "MOBILE & TABLET": "mobile tablet",
+    "OPEN BOX": "open box",
+    "OTHER BRAND": "",
+    "POWER": "power generator inverter",
+    "PRINT & SUPPLIES": "printer ink toner",
+};
 
 // Tech setup presets - map slug to relevant search terms
-const TECH_SETUP_KEYWORDS: Record<string, string[]> = {
-    "creator-studio": ["camera", "microphone", "ring light", "tripod", "webcam", "studio", "streaming", "podcast", "monitor", "graphics", "capture card", "green screen", "lighting", "content"],
-    "gamer-squad": ["gaming", "console", "controller", "headset", "keyboard", "mouse", "monitor", "playstation", "xbox", "nintendo", "vr", "quest", "hoverboard", "arcade"],
+const TECH_SETUP_KEYWORDS: Record<string, string> = {
+    "creator-studio": "camera microphone ring light tripod webcam studio streaming podcast monitor",
+    "gamer-squad": "gaming console controller headset keyboard mouse monitor playstation xbox",
 };
 
-// Sub-category keyword mappings for accurate filtering
-const SUB_CATEGORY_KEYWORDS: Record<string, string[]> = {
-    // Accessories sub-categories
-    "Computer Accessories": ["mouse", "keyboard", "usb", "hub", "webcam", "cable", "adapter", "monitor stand", "laptop stand", "docking", "hdmi", "charger", "bag", "sleeve"],
-    "Printer Accessories": ["ink", "toner", "cartridge", "paper", "drum", "ribbon", "print head"],
-    "Mobile Accessories": ["case", "screen protector", "earphone", "earbuds", "power bank", "car charger", "phone holder", "ring holder", "stylus", "otg"],
-    // Electronics sub-categories
-    "Kitchen": ["blender", "grinder", "juicer", "kettle", "microwave", "toaster", "oven", "cooker", "chiller", "freezer", "refrigerator", "food processor", "kitchen", "mixer", "fryer"],
-    "Home Appliances": ["television", "tv", "iron", "washing machine", "air conditioner", "fan", "water dispenser", "heater", "vacuum", "lighting", "lamp", "ceiling"],
-    "Audio & Video": ["headphone", "speaker", "streaming", "soundbar", "projector", "earphone", "earbuds", "bluetooth speaker", "home theatre", "amplifier"],
-    "Power": ["generator", "surge protector", "stabilizer", "power socket", "extension", "ups", "inverter", "battery"],
-    "Cameras": ["camera", "digital camera", "dslr", "mirrorless", "action cam", "gopro", "lens"],
-    "Arcade": ["console", "playstation", "xbox", "nintendo", "hoverboard", "gaming", "vr", "quest", "controller", "joystick"],
-    // Computing sub-categories
-    "Desktops": ["desktop", "workstation", "tower", "optiplex", "all-in-one", "imac", "mac mini", "pc"],
-    "Laptops": ["laptop", "notebook", "elitebook", "probook", "thinkpad", "pavilion", "envy", "macbook", "chromebook", "legion", "zephyrus", "vivobook", "ideapad"],
-    "Printers": ["printer", "laserjet", "inkjet", "deskjet", "officejet", "pixma", "ecotank"],
-    // Mobile sub-categories
-    "Mobile Phones": ["phone", "iphone", "galaxy", "redmi", "tecno", "infinix", "nokia", "oppo", "itel", "samsung", "zte"],
-    "Tablets": ["ipad", "tablet", "tab", "surface"],
-    // Power sub-categories
-    "Power & Accessories": ["battery", "inverter", "portable power", "ups", "power bank", "solar"],
-    "Generators": ["generator", "firman", "sumec", "elepaq", "tiger"],
-    // Enterprise sub-categories
-    "CCTV": ["cctv", "camera", "dvr", "nvr", "hikvision", "dahua", "surveillance"],
-    "Access Control": ["access control", "biometric", "fingerprint", "card reader", "time attendance"],
-    "Smart Home": ["smart home", "smart plug", "smart bulb", "smart lock", "alexa", "google home", "automation"],
-    "Door Locks": ["door lock", "smart lock", "digital lock", "padlock", "deadbolt"],
-    // Apple sub-categories
-    "iPhones": ["iphone"],
-    "iPads": ["ipad"],
-    "MacBooks": ["macbook", "mac book"],
-    // Print sub-categories
-    "Ink & Toner": ["ink", "toner", "cartridge", "refill"],
+// Sub-category keyword mappings for search
+const SUB_CATEGORY_KEYWORDS: Record<string, string> = {
+    "Computer Accessories": "mouse keyboard usb hub webcam cable adapter",
+    "Printer Accessories": "ink toner cartridge paper drum",
+    "Mobile Accessories": "case screen protector earphone earbuds power bank",
+    "Kitchen": "blender grinder juicer kettle microwave toaster oven cooker",
+    "Home Appliances": "television tv iron washing machine air conditioner fan",
+    "Audio & Video": "headphone speaker soundbar projector earphone bluetooth",
+    "Power": "generator surge protector stabilizer ups inverter battery",
+    "Cameras": "camera digital camera dslr mirrorless action cam",
+    "Arcade": "console playstation xbox nintendo hoverboard gaming vr",
+    "Desktops": "desktop workstation tower optiplex all-in-one pc",
+    "Laptops": "laptop notebook elitebook probook thinkpad pavilion macbook chromebook",
+    "Printers": "printer laserjet inkjet deskjet officejet",
+    "Mobile Phones": "phone iphone galaxy redmi tecno infinix samsung",
+    "Tablets": "ipad tablet tab surface",
+    "Generators": "generator firman sumec elepaq",
+    "CCTV": "cctv camera dvr nvr hikvision surveillance",
+    "Access Control": "access control biometric fingerprint",
+    "Smart Home": "smart home smart plug smart bulb smart lock alexa",
+    "Door Locks": "door lock smart lock digital lock",
+    "iPhones": "iphone",
+    "iPads": "ipad",
+    "MacBooks": "macbook",
+    "Ink & Toner": "ink toner cartridge refill",
 };
+
+// Map our sort fields to Shopify sort keys
+function mapSortKey(sortBy: string): string {
+    switch (sortBy) {
+        case "selling_price": return "PRICE";
+        case "product_name": return "TITLE";
+        case "created_at": return "CREATED_AT";
+        default: return "CREATED_AT";
+    }
+}
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -56,55 +73,65 @@ export async function GET(request: NextRequest) {
     const sortOrder = (searchParams.get("sortOrder") || "desc") as "asc" | "desc";
 
     try {
-        let query = supabase
-            .from("products")
-            .select("*", { count: "exact" })
-            .eq("is_active", true)
-            .order(sortBy, { ascending: sortOrder === "asc" })
-            .range(offset, offset + limit - 1);
+        // Build the Shopify query string
+        let queryParts: string[] = [];
 
-        if (category) {
-            query = query.eq("category", category);
+        // Category filter
+        if (category && CATEGORY_TO_SHOPIFY_QUERY[category]) {
+            const catQuery = CATEGORY_TO_SHOPIFY_QUERY[category];
+            if (catQuery) queryParts.push(catQuery);
         }
 
+        // Search term
         if (search) {
-            query = query.ilike("product_name", `%${search}%`);
+            queryParts.push(search);
         }
 
+        // Brand filter
         if (brand) {
-            // For short brand names like HP, use stricter matching
-            if (brand.length <= 3) {
-                query = query.or(`product_name.ilike.${brand} %,product_name.ilike.% ${brand} %,product_name.ilike.% ${brand}`);
-            } else {
-                query = query.ilike("product_name", `%${brand}%`);
-            }
+            queryParts.push(brand);
         }
 
-        // Tech setup preset filtering - use OR search across keywords
+        // Tech setup preset
         if (techSetup && TECH_SETUP_KEYWORDS[techSetup]) {
-            const keywords = TECH_SETUP_KEYWORDS[techSetup];
-            // Build an OR filter for product names containing any of the keywords
-            const orFilter = keywords.map(k => `product_name.ilike.%${k}%`).join(",");
-            query = query.or(orFilter);
+            queryParts.push(TECH_SETUP_KEYWORDS[techSetup]);
         }
 
-        // Sub-category filtering - use OR search across keywords
+        // Sub-category filter
         if (sub && SUB_CATEGORY_KEYWORDS[sub]) {
-            const keywords = SUB_CATEGORY_KEYWORDS[sub];
-            const orFilter = keywords.map(k => `product_name.ilike.%${k}%`).join(",");
-            query = query.or(orFilter);
+            queryParts.push(SUB_CATEGORY_KEYWORDS[sub]);
         }
 
-        const { data, error, count } = await query;
+        const shopifyQuery = queryParts.join(" ") || undefined;
+        const sortKey = mapSortKey(sortBy);
+        const reverse = sortOrder === "desc";
 
-        if (error) {
-            console.error("[API /products] Error:", error.message);
-            return NextResponse.json({ products: [], count: 0, error: error.message }, { status: 500 });
-        }
+        // Fetch from Shopify — we request more than needed to handle offset pagination
+        // Shopify uses cursor-based pagination, so we fetch offset + limit and slice
+        const fetchCount = Math.min(offset + limit, 250); // Shopify max is 250
 
-        return NextResponse.json({ products: data || [], count: count || 0 });
+        const { products: shopifyProducts, pageInfo } = await getProducts({
+            first: fetchCount,
+            sortKey,
+            reverse,
+            query: shopifyQuery,
+        });
+
+        // Convert to our internal Product type
+        const allProducts = shopifyProducts.map(shopifyToProduct);
+
+        // Apply offset pagination (simulate offset for our frontend)
+        const paginatedProducts = allProducts.slice(offset, offset + limit);
+
+        // Estimate total count (Shopify doesn't give exact count easily)
+        const estimatedCount = pageInfo.hasNextPage ? fetchCount + 50 : allProducts.length;
+
+        return NextResponse.json({
+            products: paginatedProducts,
+            count: estimatedCount,
+        });
     } catch (err: any) {
-        console.error("[API /products] Exception:", err.message);
+        console.error("[API /products] Shopify Error:", err.message);
         return NextResponse.json({ products: [], count: 0, error: err.message }, { status: 500 });
     }
 }

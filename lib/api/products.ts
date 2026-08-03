@@ -1,5 +1,21 @@
-import { supabase } from "@/lib/supabase";
-import { Product, Inventory } from "@/lib/types";
+import { Product } from "@/lib/types";
+import {
+    getProducts as shopifyGetProducts,
+    getProductByHandle,
+    searchProducts as shopifySearch,
+    getCollectionProducts,
+    shopifyToProduct,
+} from "@/lib/shopify";
+
+// Map our sort fields to Shopify sort keys
+function mapSortKey(sortBy: string): string {
+    switch (sortBy) {
+        case "selling_price": return "PRICE";
+        case "product_name": return "TITLE";
+        case "created_at": return "CREATED_AT";
+        default: return "CREATED_AT";
+    }
+}
 
 // Get all products with optional filters
 export async function getProducts({
@@ -17,124 +33,116 @@ export async function getProducts({
     sortBy?: string;
     sortOrder?: "asc" | "desc";
 } = {}) {
-    let query = supabase
-        .from("products")
-        .select("*", { count: "exact" })
-        .eq("is_active", true)
-        .order(sortBy, { ascending: sortOrder === "asc" })
-        .range(offset, offset + limit - 1);
+    try {
+        // Build Shopify query
+        let queryParts: string[] = [];
+        if (category) queryParts.push(`product_type:${category}`);
+        if (search) queryParts.push(search);
 
-    if (category) {
-        query = query.eq("category", category);
-    }
+        const shopifyQuery = queryParts.length > 0 ? queryParts.join(" ") : undefined;
+        const sortKey = mapSortKey(sortBy);
+        const reverse = sortOrder === "desc";
 
-    if (search) {
-        query = query.ilike("product_name", `%${search}%`);
-    }
+        // Fetch more than needed to handle offset
+        const fetchCount = Math.min(offset + limit, 250);
 
-    const { data, error, count } = await query;
-    if (error) {
-        console.error("[getProducts] Supabase error:", error.message, error.details, error.hint);
-        throw error;
+        const { products: shopifyProducts, pageInfo } = await shopifyGetProducts({
+            first: fetchCount,
+            sortKey,
+            reverse,
+            query: shopifyQuery,
+        });
+
+        const allProducts = shopifyProducts.map(shopifyToProduct);
+        const paginatedProducts = allProducts.slice(offset, offset + limit);
+        const estimatedCount = pageInfo.hasNextPage ? fetchCount + 50 : allProducts.length;
+
+        return { products: paginatedProducts, count: estimatedCount };
+    } catch (error: any) {
+        console.error("[getProducts] Shopify error:", error.message);
+        return { products: [], count: 0 };
     }
-    return { products: data as Product[], count: count || 0 };
 }
 
 // Get single product by slug
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-    const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("slug", slug)
-        .eq("is_active", true)
-        .single();
-
-    if (error) return null;
-    return data as Product;
+    try {
+        const shopifyProduct = await getProductByHandle(slug);
+        if (!shopifyProduct) return null;
+        return shopifyToProduct(shopifyProduct);
+    } catch {
+        return null;
+    }
 }
 
-// Get single product by id
+// Get single product by id (fallback — search by title/handle)
 export async function getProductById(id: number): Promise<Product | null> {
-    const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-    if (error) return null;
-    return data as Product;
+    // Shopify doesn't support lookup by our internal numeric ID
+    // This is a legacy function — should use slug-based lookup instead
+    return null;
 }
 
-// Get related products — same category, exclude current
+// Get related products — same product type, exclude current
 export async function getRelatedProducts(category: string, excludeId: number, limit = 4): Promise<Product[]> {
-    const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("category", category)
-        .eq("is_active", true)
-        .neq("id", excludeId)
-        .limit(limit);
-
-    if (error) return [];
-    return data as Product[];
+    try {
+        const { products } = await shopifyGetProducts({
+            first: limit + 1,
+            query: `product_type:${category}`,
+        });
+        return products
+            .map(shopifyToProduct)
+            .filter(p => p.id !== excludeId)
+            .slice(0, limit);
+    } catch {
+        return [];
+    }
 }
 
 // Get featured products for homepage sections
 export async function getFeaturedProducts(category: string, limit = 4): Promise<Product[]> {
-    const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("category", category)
-        .eq("is_active", true)
-        .order("selling_price", { ascending: false })
-        .limit(limit);
-
-    if (error) return [];
-    return data as Product[];
+    try {
+        const { products } = await shopifyGetProducts({
+            first: limit,
+            sortKey: "BEST_SELLING",
+            reverse: true,
+            query: `product_type:${category}`,
+        });
+        return products.map(shopifyToProduct);
+    } catch {
+        return [];
+    }
 }
 
-// Get all distinct categories with product counts
+// Get all distinct categories (from Shopify collections)
 export async function getCategories() {
-    const { data, error } = await supabase
-        .from("products")
-        .select("category")
-        .eq("is_active", true);
-
-    if (error) return [];
-
-    const counts: Record<string, number> = {};
-    (data || []).forEach((row: { category: string }) => {
-        counts[row.category] = (counts[row.category] || 0) + 1;
-    });
-
-    return Object.entries(counts).map(([category, count]) => ({ category, count }));
+    try {
+        const { getCollections } = await import("@/lib/shopify");
+        const collections = await getCollections();
+        return collections.map(c => ({
+            category: c.title,
+            count: 0, // Shopify doesn't return count in collection list
+        }));
+    } catch {
+        return [];
+    }
 }
 
 // Get inventory for a product by item_code (sku)
-export async function getInventory(sku: string): Promise<Inventory | null> {
-    const { data, error } = await supabase
-        .from("inventory")
-        .select("*")
-        .eq("sku", sku)
-        .single();
-
-    if (error) return null;
-    return data as Inventory;
+export async function getInventory(sku: string) {
+    // Inventory is now part of the product response from Shopify
+    // This function is kept for backward compatibility
+    return null;
 }
 
 // Search products
 export async function searchProducts(query: string, limit = 10): Promise<Product[]> {
     if (!query.trim()) return [];
-
-    const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("is_active", true)
-        .ilike("product_name", `%${query}%`)
-        .limit(limit);
-
-    if (error) return [];
-    return data as Product[];
+    try {
+        const products = await shopifySearch(query, limit);
+        return products.map(shopifyToProduct);
+    } catch {
+        return [];
+    }
 }
 
 // Get products by multiple categories (for homepage)
@@ -143,13 +151,15 @@ export async function getProductsByCategories(categories: string[], limitEach = 
 
     await Promise.all(
         categories.map(async (cat) => {
-            const { data } = await supabase
-                .from("products")
-                .select("*")
-                .eq("category", cat)
-                .eq("is_active", true)
-                .limit(limitEach);
-            results[cat] = (data || []) as Product[];
+            try {
+                const { products } = await shopifyGetProducts({
+                    first: limitEach,
+                    query: `product_type:${cat}`,
+                });
+                results[cat] = products.map(shopifyToProduct);
+            } catch {
+                results[cat] = [];
+            }
         })
     );
 

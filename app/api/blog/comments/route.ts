@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 function getDb() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiJ9.placeholder";
     const key = serviceKey || anonKey;
     if (!url || !key) {
         console.error("[blog/comments] Missing env vars:", { url: !!url, serviceKey: !!serviceKey, anonKey: !!anonKey });

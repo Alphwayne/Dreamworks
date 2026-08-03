@@ -4,9 +4,9 @@ import { createClient } from "@supabase/supabase-js";
 // Debug endpoint to check blog table access
 // Visit /api/blog/debug to see what's happening
 export async function GET() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiJ9.placeholder";
 
     const debug: any = {
         env: {
