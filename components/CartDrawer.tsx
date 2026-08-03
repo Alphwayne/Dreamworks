@@ -1,20 +1,25 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice, getProductImage } from "@/lib/types";
 
 export function CartDrawer() {
-    const { items, isOpen, closeCart, removeItem, updateQuantity, getTotalPrice, checkoutUrl, isLoading } = useCartStore();
+    const { items, isOpen, closeCart, removeItem, updateQuantity, getTotalPrice, buildCheckoutUrl, isLoading } = useCartStore();
     const total = getTotalPrice();
+    const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-    const handleCheckout = () => {
-        if (checkoutUrl) {
-            // Redirect to Shopify hosted checkout
-            window.location.href = checkoutUrl;
+    const handleCheckout = async () => {
+        setCheckoutLoading(true);
+        // Build a FRESH Shopify cart with only the current items
+        const url = await buildCheckoutUrl();
+        setCheckoutLoading(false);
+        if (url) {
+            window.location.href = url;
         } else {
-            // Fallback to custom checkout if no Shopify cart exists
+            // Fallback to custom checkout if Shopify cart creation fails
             window.location.href = "/checkout";
         }
         closeCart();
@@ -132,13 +137,13 @@ export function CartDrawer() {
                             💳 Pay Small Small — flexible instalments available
                         </div>
 
-                        {/* Checkout button — redirects to Shopify hosted checkout */}
+                        {/* Checkout button — builds fresh Shopify cart then redirects */}
                         <button
                             onClick={handleCheckout}
-                            disabled={isLoading}
+                            disabled={checkoutLoading || isLoading}
                             className="block w-full bg-blue-700 hover:bg-blue-800 text-white text-center font-bold py-3 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-wait"
                         >
-                            {isLoading ? "Preparing..." : "Checkout Securely →"}
+                            {checkoutLoading || isLoading ? "Preparing checkout..." : "Checkout Securely →"}
                         </button>
 
                         <button

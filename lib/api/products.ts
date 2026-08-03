@@ -36,7 +36,7 @@ export async function getProducts({
     try {
         // Build Shopify query
         let queryParts: string[] = [];
-        if (category) queryParts.push(`product_type:${category}`);
+        if (category) queryParts.push(`tag:"${category}"`);
         if (search) queryParts.push(search);
 
         const shopifyQuery = queryParts.length > 0 ? queryParts.join(" ") : undefined;
